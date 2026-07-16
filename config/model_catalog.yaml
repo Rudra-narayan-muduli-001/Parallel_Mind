@@ -1,0 +1,49 @@
+providers:
+  openai:
+    display_name: "OpenAI"
+    models:
+      - id: "gpt-4o"
+        display_name: "gpt-4o"
+      - id: "gpt-4o-mini"
+        display_name: "gpt-4o-mini"
+
+  anthropic:
+    display_name: "Anthropic"
+    models:
+      - id: "claude-3-5-sonnet-20241022"
+        display_name: "claude-3.5-sonnet"
+      - id: "claude-3-5-haiku-20241022"
+        display_name: "claude-3.5-haiku"
+
+  groq:
+    display_name: "Groq"
+    models:
+      - id: "llama-3.1-8b-instant"
+        display_name: "llama-3.1-8b-instant"
+      - id: "llama-3.1-70b-versatile"
+        display_name: "llama-3.1-70b-versatile"
+
+  openrouter:
+    display_name: "OpenRouter"
+    models:
+      - id: "meta-llama/llama-3.1-70b-instruct"
+        display_name: "llama-3.1-70b-instruct"
+
+  ollama_cloud:
+    display_name: "Ollama Cloud"
+    models:
+      - id: "llama3.1:8b"
+        display_name: "llama3.1-8b"
+
+  nvidia_nim:
+    display_name: "NVIDIA NIM"
+    models:
+      - id: "meta/llama-3.1-70b-instruct"
+        display_name: "llama-3.1-70b-instruct"
+
+  opencode_zen:
+    display_name: "OpenCode Zen"
+    models:
+      - id: "opencode-zen-default"
+        display_name: "zen-default"
+config/routing_table.py
