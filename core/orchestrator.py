@@ -3,9 +3,6 @@ from core.models import AgentTask, AgentResult
 
 
 class Orchestrator:
-    """Owns the concurrency cap and dispatches all tasks concurrently.
-    One failing task never crashes the batch (return_exceptions=True)."""
-
     def __init__(self, executor, router, max_concurrency: int = 5):
         self.executor = executor
         self.router = router
