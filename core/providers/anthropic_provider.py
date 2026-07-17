@@ -1,11 +1,7 @@
 import httpx
 from core.providers.base import BaseProvider, LLMResponse
 
-
 class AnthropicProvider(BaseProvider):
-    """Anthropic uses a different schema (/v1/messages, x-api-key header,
-    content blocks in response) so it needs its own implementation."""
-
     async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse:
         url = f"{self.base_url.rstrip('/')}/v1/messages"
         headers = {
