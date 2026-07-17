@@ -22,6 +22,20 @@ providers:
         display_name: "llama-3.1-8b-instant"
       - id: "llama-3.1-70b-versatile"
         display_name: "llama-3.1-70b-versatile"
+      - id: "llama-3.3-70b-versatile"
+        display_name: "llama-3.3-70b-versatile"
+      - id: "openai/gpt-oss-120b"
+        display_name: "gpt-oss-120b"
+      - id: "openai/gpt-oss-20b"
+        display_name: "gpt-oss-20b"
+      - id: "meta-llama/llama-4-scout-17b-16e-instruct"
+        display_name: "llama-4-scout-17b-16e"
+      - id: "openai/gpt-oss-safeguard-20b"
+        display_name: "gpt-oss-safeguard-20b"
+      - id: "qwen/qwen3-32b"
+        display_name: "qwen3-32b"
+      - id: "qwen/qwen3.6-27b"
+        display_name: "qwen3.6-27b"
 
   openrouter:
     display_name: "OpenRouter"
@@ -38,6 +52,7 @@ providers:
   nvidia_nim:
     display_name: "NVIDIA NIM"
     models:
+      # Nvidia
       - id: "nemotron-3-ultra-550b-a55b"
         display_name: "nemotron-3-ultra"
       - id: "nemotron-3-super-120b-a12b"
