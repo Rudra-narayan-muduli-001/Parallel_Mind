@@ -7,10 +7,6 @@ logger = logging.getLogger("parallelmind.executor")
 
 
 class AgentExecutor:
-    """Walks an ordered candidate list [(provider, model), ...] and attempts each
-    in sequence. On any failure (circuit open, no healthy key, call error/timeout),
-    immediately moves to the next candidate — no backoff/sleep between attempts."""
-
     def __init__(self, providers: dict, default_timeout: int = 60):
         self.providers = providers
         self.default_timeout = default_timeout
