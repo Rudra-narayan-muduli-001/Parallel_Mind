@@ -1,0 +1,43 @@
+import asyncio
+from rich.console import Console
+
+from config.settings import settings
+from config.effort_presets import EFFORT_PRESETS
+from core.providers.model_catalog import ModelCatalog
+from core.providers.registry import build_providers
+from core.router.policies import build_policy, RuleBasedPolicy, ManualPolicy
+from core.router.router import Router
+from core.executor import AgentExecutor
+from core.orchestrator import Orchestrator
+from cli.wizard import run_wizard
+from cli.display import console
+from pipelines.code_review.pipeline import CodeReviewPipeline
+
+console = Console()
+
+
+async def run_review(path: str):
+    catalog = ModelCatalog()
+    run_config = run_wizard(catalog)
+    providers = build_providers(settings)
+
+    if run_config.mode == "manual":
+        policy = ManualPolicy(run_config.selected_targets, run_config.effort)
+        gen_params = dict(EFFORT_PRESETS[run_config.effort])
+    else:
+        policy = RuleBasedPolicy()
+        gen_params = {}
+
+    router = Router(policy)
+    executor = AgentExecutor(providers, default_timeout=settings.default_timeout_sec)
+    orchestrator = Orchestrator(executor, router, max_concurrency=settings.default_max_concurrency)
+
+    pipeline = CodeReviewPipeline(orchestrator, providers, gen_params)
+    result = await pipeline.run(path)
+
+    if result.success:
+        console.print("\n[bold green]Code Review Complete[/bold green]")
+        console.print(result.output)
+    else:
+        console.print(f"\n[bold red]Code Review Failed[/bold red]")
+        console.print(result.error or "Unknown error")
