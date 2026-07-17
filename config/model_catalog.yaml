@@ -38,12 +38,31 @@ providers:
   nvidia_nim:
     display_name: "NVIDIA NIM"
     models:
-      - id: "meta/llama-3.1-70b-instruct"
-        display_name: "llama-3.1-70b-instruct"
+      - id: "nemotron-3-ultra-550b-a55b"
+        display_name: "nemotron-3-ultra"
+      - id: "nemotron-3-super-120b-a12b"
+        display_name: "nemotron-3-super"
+      - id: "nemotron-3-nano-30b-a3b"
+        display_name: "nemotron-3-nano"
+      - id: "llama-3.3-nemotron-super-49b-v1.5"
+        display_name: "llama-3.3-nemotron-super"
+      - id: "llama-3.3-nemotron-super-49b-v1"
+        display_name: "llama-3.3-nemotron-super-v1"
+      - id: "nvidia-nemotron-nano-9b-v2"
+        display_name: "nemotron-nano-9b-v2"
+      - id: "llama-3.1-nemotron-nano-8b-v1"
+        display_name: "llama-3.1-nemotron-nano"
+      - id: "nemotron-mini-4b-instruct"
+        display_name: "nemotron-mini-4b"
+      - id: "nemotron-3-nano-omni-30b-a3b-reasoning"
+        display_name: "nemotron-3-nano-omni"
+      - id: "nemotron-nano-12b-v2-vl"
+        display_name: "nemotron-nano-12b-vl"
+      - id: "llama-3.1-nemotron-nano-vl-8b-v1"
+        display_name: "llama-3.1-nemotron-nano-vl"
 
   opencode_zen:
     display_name: "OpenCode Zen"
     models:
       - id: "opencode-zen-default"
         display_name: "zen-default"
-config/routing_table.py

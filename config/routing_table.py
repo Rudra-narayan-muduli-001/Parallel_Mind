@@ -7,9 +7,10 @@ ROUTING_TABLE = {
     ("research", "mid"): [
         ("groq", "llama-3.1-70b-versatile"),
         ("openrouter", "meta-llama/llama-3.1-70b-instruct"),
-        ("nvidia_nim", "meta/llama-3.1-70b-instruct"),
+        ("nvidia_nim", "llama-3.3-nemotron-super-49b-v1.5"),
     ],
     ("research", "high"): [
+        ("nvidia_nim", "nemotron-3-super-120b-a12b"),
         ("openai", "gpt-4o-mini"),
         ("anthropic", "claude-3-5-haiku-20241022"),
     ],
@@ -29,9 +30,10 @@ ROUTING_TABLE = {
     ],
     ("code_review", "mid"): [
         ("groq", "llama-3.1-70b-versatile"),
-        ("nvidia_nim", "meta/llama-3.1-70b-instruct"),
+        ("nvidia_nim", "llama-3.3-nemotron-super-49b-v1.5"),
     ],
     ("code_review", "high"): [
+        ("nvidia_nim", "nemotron-3-super-120b-a12b"),
         ("openai", "gpt-4o-mini"),
         ("openrouter", "meta-llama/llama-3.1-70b-instruct"),
     ],

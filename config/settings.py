@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # NVIDIA NIM
     nvidia_nim_api_keys: str = ""
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
-    nvidia_nim_default_model: str = "meta/llama-3.1-70b-instruct"
+    nvidia_nim_default_model: str = "llama-3.3-nemotron-super-49b-v1.5"
 
     # OpenCode Zen
     opencode_zen_api_keys: str = ""
