@@ -61,6 +61,86 @@ providers:
       - id: "llama-3.1-nemotron-nano-vl-8b-v1"
         display_name: "llama-3.1-nemotron-nano-vl"
 
+      # Meta
+      - id: "llama-3.3-70b-instruct"
+        display_name: "llama-3.3-70b-instruct"
+      - id: "llama-3.1-70b-instruct"
+        display_name: "llama-3.1-70b-instruct"
+      - id: "llama-3.1-8b-instruct"
+        display_name: "llama-3.1-8b-instruct"
+      - id: "llama-3.2-3b-instruct"
+        display_name: "llama-3.2-3b-instruct"
+      - id: "llama-3.2-1b-instruct"
+        display_name: "llama-3.2-1b-instruct"
+      - id: "llama-3.2-90b-vision-instruct"
+        display_name: "llama-3.2-90b-vision"
+      - id: "llama-3.2-11b-vision-instruct"
+        display_name: "llama-3.2-11b-vision"
+
+      # OpenAI (OSS models)
+      - id: "gpt-oss-120b"
+        display_name: "gpt-oss-120b"
+      - id: "gpt-oss-20b"
+        display_name: "gpt-oss-20b"
+
+      # DeepSeek AI
+      - id: "deepseek-v4-pro"
+        display_name: "deepseek-v4-pro"
+      - id: "deepseek-v4-flash"
+        display_name: "deepseek-v4-flash"
+
+      # Qwen
+      - id: "qwen3.5-397b-a17b"
+        display_name: "qwen3.5-397b"
+      - id: "qwen3.5-122b-a10b"
+        display_name: "qwen3.5-122b"
+      - id: "qwen3-next-80b-a3b-instruct"
+        display_name: "qwen3-next-80b"
+
+      # Mistral AI
+      - id: "mistral-large-3-675b-instruct-2512"
+        display_name: "mistral-large-3"
+      - id: "mistral-small-4-119b-2603"
+        display_name: "mistral-small-4"
+      - id: "mistral-medium-3.5-128b"
+        display_name: "mistral-medium-3.5"
+      - id: "ministral-14b-instruct-2512"
+        display_name: "ministral-14b"
+      - id: "mistral-nemotron"
+        display_name: "mistral-nemotron"
+      - id: "mixtral-8x7b-instruct-v0.1"
+        display_name: "mixtral-8x7b"
+
+      # Google
+      - id: "gemma-4-31b-it"
+        display_name: "gemma-4-31b-it"
+      - id: "paligemma"
+        display_name: "paligemma"
+      - id: "diffusiongemma-26b-a4b-it"
+        display_name: "diffusiongemma-26b"
+
+      # Minimax
+      - id: "minimax-m2.7"
+        display_name: "minimax-m2.7"
+      - id: "minimax-m3"
+        display_name: "minimax-m3"
+
+      # Z.ai
+      - id: "glm-5.2"
+        display_name: "glm-5.2"
+
+      # Stepfun
+      - id: "step-3.7-flash"
+        display_name: "step-3.7-flash"
+
+      # Sarvam AI
+      - id: "sarvam-m"
+        display_name: "sarvam-m"
+
+      # Moonshot AI
+      - id: "kimi-k2.6"
+        display_name: "kimi-k2.6"
+
   opencode_zen:
     display_name: "OpenCode Zen"
     models:
