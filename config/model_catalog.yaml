@@ -161,3 +161,13 @@ providers:
     models:
       - id: "opencode-zen-default"
         display_name: "zen-default"
+      - id: "deepseek-v4-flash-free"
+        display_name: "deepseek-v4-flash-free"
+      - id: "mimo-v2.5-free"
+        display_name: "mimo-v2.5-free"
+      - id: "big-pickle"
+        display_name: "big-pickle"
+      - id: "north-mini-code-free"
+        display_name: "north-mini-code-free"
+      - id: "nemotron-3-ultra-free"
+        display_name: "nemotron-3-ultra-free"
