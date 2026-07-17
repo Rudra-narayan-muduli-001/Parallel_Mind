@@ -29,9 +29,9 @@ async def check_config():
     catalog = ModelCatalog()
     try:
         validate_routing_table_against_catalog(ROUTING_TABLE, catalog)
-        console.print("[green]✓ Routing table validated against model catalog[/green]")
+        console.print("[green]OK - Routing table validated against model catalog[/green]")
     except ValueError as e:
-        console.print(f"[red]✗ Routing table validation failed:[/red] {e}")
+        console.print(f"[red]FAIL - Routing table validation failed:[/red] {e}")
 
     console.print(f"\n[bold]Effort Presets:[/bold] {len(EFFORT_PRESETS)} configured")
     for name, params in EFFORT_PRESETS.items():
