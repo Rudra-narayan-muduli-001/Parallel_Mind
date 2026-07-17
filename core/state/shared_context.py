@@ -3,10 +3,6 @@ from typing import Any
 
 
 class SharedContext:
-    """Optional, opt-in lock-protected shared store for cross-agent awareness.
-    NOT used by default pipelines (v1) — agents are isolated by design.
-    Only instantiate this if a pipeline explicitly needs cross-agent state."""
-
     def __init__(self):
         self._lock = asyncio.Lock()
         self._store: dict[str, Any] = {}
