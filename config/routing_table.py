@@ -2,7 +2,6 @@ ROUTING_TABLE = {
     # ---------------- RESEARCH ----------------
     ("research", "low"): [
         ("groq", "llama-3.1-8b-instant"),
-        ("ollama_cloud", "llama3.1:8b"),
     ],
     ("research", "mid"): [
         ("groq", "llama-3.1-70b-versatile"),
@@ -26,7 +25,6 @@ ROUTING_TABLE = {
     # ---------------- CODE REVIEW ----------------
     ("code_review", "low"): [
         ("groq", "llama-3.1-8b-instant"),
-        ("ollama_cloud", "llama3.1:8b"),
     ],
     ("code_review", "mid"): [
         ("groq", "llama-3.1-70b-versatile"),

@@ -24,11 +24,6 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     openrouter_default_model: str = "meta-llama/llama-3.1-70b-instruct"
 
-    # Ollama Cloud
-    ollama_cloud_api_keys: str = ""
-    ollama_cloud_base_url: str = "https://ollama.com/v1"
-    ollama_cloud_default_model: str = "llama3.1:8b"
-
     # NVIDIA NIM
     nvidia_nim_api_keys: str = ""
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
@@ -79,11 +74,6 @@ class Settings(BaseSettings):
                 "api_keys": self._split_keys(self.openrouter_api_keys),
                 "base_url": self.openrouter_base_url,
                 "default_model": self.openrouter_default_model,
-            },
-            "ollama_cloud": {
-                "api_keys": self._split_keys(self.ollama_cloud_api_keys),
-                "base_url": self.ollama_cloud_base_url,
-                "default_model": self.ollama_cloud_default_model,
             },
             "nvidia_nim": {
                 "api_keys": self._split_keys(self.nvidia_nim_api_keys),

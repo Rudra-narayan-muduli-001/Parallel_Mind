@@ -2,7 +2,7 @@ from core.providers.openai_compatible import OpenAICompatibleProvider
 from core.providers.anthropic_provider import AnthropicProvider
 
 OPENAI_COMPATIBLE_PROVIDERS = {
-    "openai", "groq", "openrouter", "nvidia_nim", "ollama_cloud", "opencode_zen"
+    "openai", "groq", "openrouter", "nvidia_nim", "opencode_zen"
 }
 
 

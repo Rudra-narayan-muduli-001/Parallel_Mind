@@ -67,12 +67,6 @@ providers:
       - id: "nvidia/nemotron-3-ultra-550b-a55b:free"
         display_name: "nemotron-3-ultra"
 
-  ollama_cloud:
-    display_name: "Ollama Cloud"
-    models:
-      - id: "llama3.1:8b"
-        display_name: "llama3.1-8b"
-
   nvidia_nim:
     display_name: "NVIDIA NIM"
     models:
