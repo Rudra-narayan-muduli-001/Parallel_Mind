@@ -9,6 +9,7 @@ OPENAI_COMPATIBLE_PROVIDERS = {
 def build_providers(settings) -> dict:
     """Only providers with at least one configured API key get registered.
     Empty API_KEYS in .env = provider automatically disabled, no code change needed."""
+    
     providers = {}
     provider_configs = settings.get_provider_configs()
 
