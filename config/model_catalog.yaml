@@ -159,8 +159,6 @@ providers:
   opencode_zen:
     display_name: "OpenCode Zen"
     models:
-      - id: "opencode-zen-default"
-        display_name: "zen-default"
       - id: "deepseek-v4-flash-free"
         display_name: "deepseek-v4-flash-free"
       - id: "mimo-v2.5-free"
