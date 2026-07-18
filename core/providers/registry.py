@@ -1,3 +1,4 @@
+from core.providers.base import BaseProvider
 from core.providers.openai_compatible import OpenAICompatibleProvider
 from core.providers.anthropic_provider import AnthropicProvider
 
@@ -6,11 +7,11 @@ OPENAI_COMPATIBLE_PROVIDERS = {
 }
 
 
-def build_providers(settings) -> dict:
+def build_providers(settings) -> dict[str, BaseProvider]:
     """Only providers with at least one configured API key get registered.
     Empty API_KEYS in .env = provider automatically disabled, no code change needed."""
     
-    providers = {}
+    providers: dict[str, BaseProvider] = {}
     provider_configs = settings.get_provider_configs()
 
     for name, cfg in provider_configs.items():
