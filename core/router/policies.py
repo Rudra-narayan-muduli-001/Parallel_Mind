@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 
 from core.router.candidate_rotation import RotatingCandidatePool
@@ -54,11 +55,10 @@ Respond ONLY with JSON list: [{{"provider":"...","model":"..."}}, ...]"""
         api_key = await self.router_provider.key_pool.get_key()
         response = await self.router_provider.call(self.router_model, prompt, api_key)
 
-        import json
         try:
             ranked = json.loads(response.text)
             return [(r["provider"], r["model"]) for r in ranked]
-        except Exception:
+        except (json.JSONDecodeError, KeyError, TypeError):
             return self.all_targets[:3]
 
 

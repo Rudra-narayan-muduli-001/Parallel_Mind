@@ -106,7 +106,7 @@ class LLMSynthesisAggregator(AggregationStrategy):
                 latency_sec=sum(r.latency_sec for r in successful),
                 tokens_used=(response.tokens_used or 0) + sum(r.tokens_used or 0 for r in successful),
             )
-        except Exception as e:
+        except (KeyError, ValueError, OSError) as e:
             return AgentResult(
                 task_id=task.id,
                 success=False,

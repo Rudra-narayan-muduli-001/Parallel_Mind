@@ -37,7 +37,7 @@ class CodeReviewSplitter:
         try:
             with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-        except Exception:
+        except (OSError, UnicodeDecodeError):
             content = ""
 
         lines = content.count("\n") + 1
