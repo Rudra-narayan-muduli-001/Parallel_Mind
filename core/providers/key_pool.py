@@ -11,7 +11,6 @@ class APIKeyPool:
     Tracks per-key health (failure count + cooldown) so failing keys are
     automatically skipped without manual intervention."""
 
-    # Round-robin means that if you have 3 keys and 3 concurrent requests, each request will get a different key.
 
     def __init__(self, keys: list[str]):
         self.keys = keys

@@ -11,8 +11,6 @@ class OpenAICompatibleProvider(BaseProvider):
     Ollama Cloud,
     OpenCode Zen."""
 
-    # There are many providers that implement the OpenAI API spec, but they may have different base URLs and authentication methods. This class provides a common interface for those providers.
-    # Congratulations! are you reading all of these comments? I appreciate your curiosity. I hope you find this code useful and informative. If you have any questions or suggestions, please feel free to reach out. Happy coding!
 
     async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse:
         url = f"{self.base_url.rstrip('/')}/chat/completions"
