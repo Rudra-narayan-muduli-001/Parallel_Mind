@@ -2,6 +2,8 @@ import os
 
 from core.models import AgentTask, ComplexityTier
 
+MAX_PROMPT_CHARS = 8000
+
 
 def _tier_for_lines(count: int) -> ComplexityTier:
     if count < 50:
@@ -46,7 +48,7 @@ class CodeReviewSplitter:
 
         return AgentTask(
             id=f"review-{relpath}",
-            prompt=content[:8000] if content else "(empty file)",
+            prompt=content[:MAX_PROMPT_CHARS] if content else "(empty file)",
             metadata={
                 "task_type": "code_review",
                 "complexity_tier": tier,
