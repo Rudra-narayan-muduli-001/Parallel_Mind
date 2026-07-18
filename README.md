@@ -4,7 +4,7 @@ Lightweight parallel AI agent orchestration framework. Routes tasks across multi
 
 ## Features
 
-- **Multi-provider support**: OpenAI, Anthropic, Groq, OpenRouter, NVIDIA NIM, Ollama Cloud, OpenCode Zen
+- **Multi-provider support**: OpenAI, Anthropic, Groq, OpenRouter, NVIDIA NIM, OpenCode Zen
 - **Dual-dimension round robin**: Rotates across both API keys and model names
 - **Immediate failover**: No delay between candidate attempts — skip failed targets instantly
 - **Interactive CLI wizard**: Default (tier-driven) or Manual (user-selected models) mode
@@ -18,12 +18,14 @@ Lightweight parallel AI agent orchestration framework. Routes tasks across multi
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env  # fill in your API keys
+cp .env.example .env   # fill in your API keys
 parallelmind research "your topic"
 parallelmind review ./src
 parallelmind providers
 parallelmind config
 ```
+
+Run `parallelmind` without arguments to enter the interactive CLI wizard.
 
 ## Configuration
 
