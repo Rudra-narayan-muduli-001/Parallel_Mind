@@ -13,7 +13,7 @@ class Orchestrator:
             candidates = await self.router.decide(task)
             return await self.executor.run(agent, task, candidates, gen_params)
 
-    async def run_batch(self, agent, tasks: list[AgentTask], gen_params: dict = None) -> list[AgentResult]:
+    async def run_batch(self, agent, tasks: list[AgentTask], gen_params: dict | None = None) -> list[AgentResult]:
         gen_params = gen_params or {}
         results = await asyncio.gather(
             *[self._run_one(agent, t, gen_params) for t in tasks],
@@ -24,5 +24,6 @@ class Orchestrator:
             if isinstance(r, Exception):
                 final.append(AgentResult(task_id=task.id, success=False, error=str(r), latency_sec=0.0))
             else:
+                assert isinstance(r, AgentResult)
                 final.append(r)
         return final
