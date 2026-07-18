@@ -3,7 +3,7 @@ from config.routing_table import DEFAULT_TIER
 
 
 class ResearchPlanner:
-    def __init__(self, planner_provider, planner_model: str = None):
+    def __init__(self, planner_provider, planner_model: str | None = None):
         self.provider = planner_provider
         self.model = planner_model or planner_provider.default_model
 
@@ -21,14 +21,14 @@ class ResearchPlanner:
         api_key = await self.provider.key_pool.get_key()
         response = await self.provider.call(self.model, prompt, api_key)
 
-        tasks = []
+        tasks: list[AgentTask] = []
         for line in response.text.strip().split("\n"):
             line = line.strip()
             if "|" not in line:
                 continue
             tier_str, question = line.split("|", 1)
             tier_str = tier_str.strip().lower()
-            tier: ComplexityTier = tier_str if tier_str in ("low", "mid", "high", "xhigh", "max") else DEFAULT_TIER
+            tier: ComplexityTier = tier_str if tier_str in {"low", "mid", "high", "xhigh", "max"} else DEFAULT_TIER
             tasks.append(AgentTask(
                 id=f"research-{len(tasks)}",
                 prompt=question.strip(),
