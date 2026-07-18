@@ -28,7 +28,9 @@ class ResearchPlanner:
                 continue
             tier_str, question = line.split("|", 1)
             tier_str = tier_str.strip().lower()
-            tier: ComplexityTier = tier_str if tier_str in {"low", "mid", "high", "xhigh", "max"} else DEFAULT_TIER
+            tier: ComplexityTier = DEFAULT_TIER
+            if tier_str in {"low", "mid", "high", "xhigh", "max"}:
+                tier = tier_str  # type: ignore[assignment]
             tasks.append(AgentTask(
                 id=f"research-{len(tasks)}",
                 prompt=question.strip(),
