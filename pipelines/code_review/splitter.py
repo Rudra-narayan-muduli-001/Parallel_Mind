@@ -30,7 +30,9 @@ class CodeReviewSplitter:
             for root, dirs, files in os.walk(self.target_path):
                 dirs[:] = [d for d in dirs if not d.startswith((".", "__pycache__", "node_modules", "venv", ".venv"))]
                 for fname in files:
-                    if fname.endswith((".py", ".js", ".ts", ".jsx", ".tsx", ".rs", ".go", ".java", ".cs", ".cpp", ".h", ".hpp")):
+                    if fname.endswith(
+                        (".py", ".js", ".ts", ".jsx", ".tsx", ".rs", ".go", ".java", ".cs", ".cpp", ".h", ".hpp")
+                    ):
                         fpath = os.path.join(root, fname)
                         tasks.append(self._file_task(fpath))
         return tasks

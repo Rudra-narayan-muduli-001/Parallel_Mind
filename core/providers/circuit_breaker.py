@@ -3,8 +3,8 @@ import time
 
 class CircuitBreaker:
     """CLOSED
-    -> OPEN (after N consecutive failures) 
-    -> HALF_OPEN (after cooldown,trial request allowed) 
+    -> OPEN (after N consecutive failures)
+    -> HALF_OPEN (after cooldown,trial request allowed)
     -> CLOSED (on success) or back to OPEN (on failure)."""
 
     def __init__(self, fail_threshold: int = 5, reset_timeout: float = 60.0):

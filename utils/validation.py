@@ -8,8 +8,6 @@ def validate_routing_table_against_catalog(routing_table: dict, catalog: ModelCa
             entry = catalog.providers.get(provider_name)
             valid_models = entry.models if entry else []
             if not any(m.id == model_id for m in valid_models):
-                errors.append(
-                    f"Routing table references unknown model '{model_id}' for provider '{provider_name}'"
-                )
+                errors.append(f"Routing table references unknown model '{model_id}' for provider '{provider_name}'")
     if errors:
         raise ValueError("Routing table validation failed:\n" + "\n".join(errors))

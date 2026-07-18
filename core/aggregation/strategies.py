@@ -36,6 +36,7 @@ class VotingAggregator(AggregationStrategy):
             return AgentResult(task_id=task.id, success=False, error="No successful results to vote on")
 
         from collections import Counter
+
         counts: Counter[str] = Counter()
         for r in successful:
             key = str(r.output).strip()
@@ -91,8 +92,7 @@ class LLMSynthesisAggregator(AggregationStrategy):
             return AgentResult(task_id=task.id, success=False, error="No successful results to synthesize")
 
         findings_text = "\n\n".join(
-            f"--- Finding from {r.provider_used or 'unknown'} ---\n{r.output}"
-            for r in successful
+            f"--- Finding from {r.provider_used or 'unknown'} ---\n{r.output}" for r in successful
         )
         prompt = self.template.format(task_prompt=task.prompt, findings=findings_text)
 

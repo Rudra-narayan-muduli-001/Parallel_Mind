@@ -1,6 +1,7 @@
 import httpx
 from core.providers.base import BaseProvider, LLMResponse
 
+
 class AnthropicProvider(BaseProvider):
     async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse:
         url = f"{self.base_url.rstrip('/')}/v1/messages"

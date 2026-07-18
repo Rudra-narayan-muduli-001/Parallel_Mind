@@ -7,5 +7,9 @@ requires-python = ">=3.11"
 [project.scripts]
 parallelmind = "cli.main:app"
 
+[tool.black]
+target-version = ["py312"]
+line-length = 120
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

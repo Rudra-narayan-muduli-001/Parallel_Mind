@@ -23,7 +23,6 @@ ROUTING_TABLE = {
         ("anthropic", "claude-3-5-sonnet-20241022"),
         ("openai", "gpt-4o"),
     ],
-
     # ---------------- CODE REVIEW ----------------
     ("code_review", "low"): [
         ("groq", "llama-3.1-8b-instant"),

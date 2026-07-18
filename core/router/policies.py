@@ -7,8 +7,7 @@ from config.routing_table import ROUTING_TABLE, DEFAULT_TIER
 
 class RoutingPolicy(ABC):
     @abstractmethod
-    async def decide(self, task) -> list[tuple[str, str]]:
-        ...
+    async def decide(self, task) -> list[tuple[str, str]]: ...
 
 
 class RuleBasedPolicy(RoutingPolicy):
@@ -71,11 +70,7 @@ def build_policy(run_config, providers=None) -> RoutingPolicy:
         return ManualPolicy(run_config.selected_targets, run_config.effort)
 
     if mode == "llm_based" and providers:
-        all_targets = [
-            (pname, prov.default_model)
-            for pname, prov in providers.items()
-            if prov.default_model
-        ]
+        all_targets = [(pname, prov.default_model) for pname, prov in providers.items() if prov.default_model]
         router_provider = providers.get(settings.router_model_provider)
         if router_provider:
             return LLMRouterPolicy(router_provider, settings.router_model_name, all_targets)

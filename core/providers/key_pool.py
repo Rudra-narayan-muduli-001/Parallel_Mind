@@ -17,10 +17,7 @@ class APIKeyPool:
         self.keys = keys
         self._index = 0
         self._lock = asyncio.Lock()
-        self.status = {
-            k: {"healthy": True, "cooldown_until": 0.0, "failures": 0}
-            for k in keys
-        }
+        self.status = {k: {"healthy": True, "cooldown_until": 0.0, "failures": 0} for k in keys}
 
     async def get_key(self) -> str:
         if not self.keys:

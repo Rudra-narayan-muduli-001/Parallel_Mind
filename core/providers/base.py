@@ -21,8 +21,7 @@ class BaseProvider(ABC):
         self.breaker = CircuitBreaker()
 
     @abstractmethod
-    async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse:
-        ...
+    async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse: ...
 
     def is_healthy(self) -> bool:
         return self.breaker.allow_request() and self.key_pool.has_healthy_key()

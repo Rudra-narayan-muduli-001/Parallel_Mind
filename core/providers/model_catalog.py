@@ -22,9 +22,7 @@ class ModelCatalog:
         with open(self.path, "r") as f:
             raw = yaml.safe_load(f) or {}
         providers_raw = raw.get("providers", {})
-        self.providers = {
-            name: ProviderCatalogEntry(**data) for name, data in providers_raw.items()
-        }
+        self.providers = {name: ProviderCatalogEntry(**data) for name, data in providers_raw.items()}
 
     def list_provider_names(self) -> list[str]:
         return list(self.providers.keys())

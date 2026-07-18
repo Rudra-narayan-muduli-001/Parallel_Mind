@@ -31,17 +31,21 @@ class ResearchPlanner:
             tier: ComplexityTier = DEFAULT_TIER
             if tier_str in {"low", "mid", "high", "xhigh", "max"}:
                 tier = tier_str  # type: ignore[assignment]
-            tasks.append(AgentTask(
-                id=f"research-{len(tasks)}",
-                prompt=question.strip(),
-                metadata={"task_type": "research", "complexity_tier": tier},
-            ))
+            tasks.append(
+                AgentTask(
+                    id=f"research-{len(tasks)}",
+                    prompt=question.strip(),
+                    metadata={"task_type": "research", "complexity_tier": tier},
+                )
+            )
 
         if not tasks:
-            tasks.append(AgentTask(
-                id="research-0",
-                prompt=topic,
-                metadata={"task_type": "research", "complexity_tier": DEFAULT_TIER},
-            ))
+            tasks.append(
+                AgentTask(
+                    id="research-0",
+                    prompt=topic,
+                    metadata={"task_type": "research", "complexity_tier": DEFAULT_TIER},
+                )
+            )
 
         return tasks

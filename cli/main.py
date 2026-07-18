@@ -26,24 +26,28 @@ def main():
 @app.command()
 def research(topic: str):
     from cli.commands.research_cmd import run_research
+
     asyncio.run(run_research(topic))
 
 
 @app.command()
 def review(path: str = "."):
     from cli.commands.review_cmd import run_review
+
     asyncio.run(run_review(path))
 
 
 @app.command()
 def providers():
     from cli.commands.providers_cmd import show_providers
+
     asyncio.run(show_providers())
 
 
 @app.command()
 def config():
     from cli.commands.config_cmd import check_config
+
     asyncio.run(check_config())
 
 

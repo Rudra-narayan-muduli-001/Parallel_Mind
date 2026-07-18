@@ -10,9 +10,11 @@ def setup_logging(level: str = "INFO", fmt: str = "json") -> logging.Logger:
             from pythonjsonlogger import jsonlogger
 
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(jsonlogger.JsonFormatter(
-                fmt="%(asctime)s %(name)s %(levelname)s %(message)s",
-            ))
+            handler.setFormatter(
+                jsonlogger.JsonFormatter(
+                    fmt="%(asctime)s %(name)s %(levelname)s %(message)s",
+                )
+            )
             logger.addHandler(handler)
         except ImportError:
             fmt = "standard"
