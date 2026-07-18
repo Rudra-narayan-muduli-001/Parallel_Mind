@@ -6,7 +6,7 @@ from pipelines.research.aggregator import build_research_aggregator
 
 
 class ResearchPipeline:
-    def __init__(self, orchestrator: Orchestrator, providers: dict, gen_params: dict = None):
+    def __init__(self, orchestrator: Orchestrator, providers: dict, gen_params: dict | None = None):
         self.orchestrator = orchestrator
         self.providers = providers
         self.gen_params = gen_params or {}

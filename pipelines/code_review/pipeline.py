@@ -6,7 +6,7 @@ from pipelines.code_review.aggregator import build_code_review_aggregator
 
 
 class CodeReviewPipeline:
-    def __init__(self, orchestrator: Orchestrator, providers: dict, gen_params: dict = None):
+    def __init__(self, orchestrator: Orchestrator, providers: dict, gen_params: dict | None = None):
         self.orchestrator = orchestrator
         self.providers = providers
         self.gen_params = gen_params or {}
