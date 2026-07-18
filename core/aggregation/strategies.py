@@ -75,7 +75,7 @@ class DedupeMergeAggregator(AggregationStrategy):
 
 
 class LLMSynthesisAggregator(AggregationStrategy):
-    def __init__(self, provider, model: str, synthesis_prompt_template: str = None):
+    def __init__(self, provider, model: str, synthesis_prompt_template: str | None = None):
         self.provider = provider
         self.model = model
         self.template = synthesis_prompt_template or (
