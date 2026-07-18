@@ -1,3 +1,5 @@
+from core.models import ComplexityTier
+
 ROUTING_TABLE = {
     # ---------------- RESEARCH ----------------
     ("research", "low"): [
@@ -45,4 +47,4 @@ ROUTING_TABLE = {
     ],
 }
 
-DEFAULT_TIER = "mid"
+DEFAULT_TIER: ComplexityTier = "mid"
