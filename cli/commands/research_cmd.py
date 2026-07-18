@@ -17,7 +17,7 @@ async def run_research(topic: str):
     providers = build_providers(settings)
 
     if run_config.mode == "manual":
-        policy = ManualPolicy(run_config.selected_targets, run_config.effort)
+        policy: RuleBasedPolicy | ManualPolicy = ManualPolicy(run_config.selected_targets, run_config.effort)
         gen_params = dict(EFFORT_PRESETS[run_config.effort])
     else:
         policy = RuleBasedPolicy()
