@@ -6,7 +6,6 @@ from config.settings import settings
 from utils.logger import setup_logging
 from utils.validation import validate_routing_table_against_catalog
 from core.providers.model_catalog import ModelCatalog
-from core.providers.registry import build_providers
 from config.routing_table import ROUTING_TABLE
 
 console = Console()

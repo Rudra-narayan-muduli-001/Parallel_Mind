@@ -1,7 +1,6 @@
 import os
 
 from core.models import AgentTask, ComplexityTier
-from config.routing_table import DEFAULT_TIER
 
 
 def _tier_for_lines(count: int) -> ComplexityTier:

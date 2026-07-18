@@ -1,4 +1,4 @@
-from core.providers.model_catalog import ModelCatalog, ProviderCatalogEntry
+from core.providers.model_catalog import ModelCatalog
 
 
 def validate_routing_table_against_catalog(routing_table: dict, catalog: ModelCatalog):

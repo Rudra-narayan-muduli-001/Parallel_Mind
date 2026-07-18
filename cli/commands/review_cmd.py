@@ -1,19 +1,14 @@
-import asyncio
-from rich.console import Console
-
 from config.settings import settings
 from config.effort_presets import EFFORT_PRESETS
 from core.providers.model_catalog import ModelCatalog
 from core.providers.registry import build_providers
-from core.router.policies import build_policy, RuleBasedPolicy, ManualPolicy
+from core.router.policies import RuleBasedPolicy, ManualPolicy
 from core.router.router import Router
 from core.executor import AgentExecutor
 from core.orchestrator import Orchestrator
 from cli.wizard import run_wizard
 from cli.display import console
 from pipelines.code_review.pipeline import CodeReviewPipeline
-
-console = Console()
 
 
 async def run_review(path: str):
@@ -39,5 +34,5 @@ async def run_review(path: str):
         console.print("\n[bold green]Code Review Complete[/bold green]")
         console.print(result.output)
     else:
-        console.print(f"\n[bold red]Code Review Failed[/bold red]")
+        console.print("\n[bold red]Code Review Failed[/bold red]")
         console.print(result.error or "Unknown error")
