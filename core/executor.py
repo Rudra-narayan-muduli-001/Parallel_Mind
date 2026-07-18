@@ -11,7 +11,7 @@ class AgentExecutor:
         self.providers = providers
         self.default_timeout = default_timeout
 
-    async def run(self, agent, task, candidates: list[tuple[str, str]], gen_params: dict = None) -> AgentResult:
+    async def run(self, agent, task, candidates: list[tuple[str, str]], gen_params: dict | None = None) -> AgentResult:
         gen_params = gen_params or {}
         timeout = gen_params.get("timeout_sec", self.default_timeout)
 
