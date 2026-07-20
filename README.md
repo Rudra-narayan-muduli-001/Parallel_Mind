@@ -42,6 +42,10 @@ pytest
 
 41 tests total (30 in `tests/`, 11 in `cli/`).
 
+## Contributing
+
+Pull requests and issues are welcome.
+
 ## Architecture
 
 See `architecture.md` for the full design document.
