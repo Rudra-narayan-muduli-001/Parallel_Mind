@@ -34,6 +34,14 @@ Run `parallelmind` without arguments to enter the interactive CLI wizard.
 - `config/routing_table.py` — 5-tier routing policies per task type
 - `config/effort_presets.py` — Low/High effort generation parameters
 
+## Testing
+
+```bash
+pytest
+```
+
+41 tests total (30 in `tests/`, 11 in `cli/`).
+
 ## Architecture
 
 See `architecture.md` for the full design document.
