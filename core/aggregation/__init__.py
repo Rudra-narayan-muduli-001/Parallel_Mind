@@ -1,10 +1,10 @@
 from core.aggregation.base import AggregationStrategy
 from core.aggregation.strategies import (
     ConcatAggregator,
-    FirstSuccessAggregator,
-    VotingAggregator,
     DedupeMergeAggregator,
+    FirstSuccessAggregator,
     LLMSynthesisAggregator,
+    VotingAggregator,
 )
 
 __all__ = [

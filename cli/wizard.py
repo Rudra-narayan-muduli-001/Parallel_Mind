@@ -1,7 +1,8 @@
 from rich.console import Console
-from core.providers.model_catalog import ModelCatalog
-from cli.run_config import RunConfig
+
 from cli.display import parse_comma_indices
+from cli.run_config import RunConfig
+from core.providers.model_catalog import ModelCatalog
 
 console = Console()
 

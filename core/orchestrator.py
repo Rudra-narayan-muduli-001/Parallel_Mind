@@ -1,5 +1,6 @@
 import asyncio
-from core.models import AgentTask, AgentResult
+
+from core.models import AgentResult, AgentTask
 
 
 class Orchestrator:

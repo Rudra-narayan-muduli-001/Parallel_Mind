@@ -1,6 +1,6 @@
+from cli.display import console, render_provider_status_table
 from config.settings import settings
 from core.providers.registry import build_providers
-from cli.display import render_provider_status_table, console
 
 
 async def show_providers():

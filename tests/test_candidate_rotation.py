@@ -1,4 +1,5 @@
 import pytest
+
 from core.router.candidate_rotation import RotatingCandidatePool
 
 

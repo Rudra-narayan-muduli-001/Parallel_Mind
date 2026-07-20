@@ -1,8 +1,8 @@
-from core.models import AgentTask, AgentResult
+from core.models import AgentResult, AgentTask
 from core.orchestrator import Orchestrator
+from pipelines.research.aggregator import build_research_aggregator
 from pipelines.research.planner import ResearchPlanner
 from pipelines.research.researcher_agent import ResearcherAgent
-from pipelines.research.aggregator import build_research_aggregator
 
 
 class ResearchPipeline:

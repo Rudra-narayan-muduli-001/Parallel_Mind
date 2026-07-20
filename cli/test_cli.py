@@ -1,5 +1,5 @@
-from cli.run_config import RunConfig
 from cli.display import parse_comma_indices
+from cli.run_config import RunConfig
 
 
 class TestParseCommaIndices:

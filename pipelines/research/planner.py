@@ -1,5 +1,5 @@
-from core.models import AgentTask, ComplexityTier
 from config.routing_table import DEFAULT_TIER
+from core.models import AgentTask, ComplexityTier
 
 
 class ResearchPlanner:

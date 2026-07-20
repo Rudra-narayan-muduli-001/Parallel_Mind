@@ -1,8 +1,8 @@
-from core.models import AgentTask, AgentResult
+from core.models import AgentResult, AgentTask
 from core.orchestrator import Orchestrator
-from pipelines.code_review.splitter import CodeReviewSplitter
-from pipelines.code_review.reviewer_agent import CodeReviewerAgent
 from pipelines.code_review.aggregator import build_code_review_aggregator
+from pipelines.code_review.reviewer_agent import CodeReviewerAgent
+from pipelines.code_review.splitter import CodeReviewSplitter
 
 
 class CodeReviewPipeline:

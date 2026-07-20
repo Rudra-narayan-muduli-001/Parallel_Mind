@@ -1,6 +1,7 @@
 import pytest
+
 from core.models import AgentTask
-from core.router.policies import RuleBasedPolicy, ManualPolicy
+from core.router.policies import ManualPolicy, RuleBasedPolicy
 
 
 @pytest.mark.asyncio

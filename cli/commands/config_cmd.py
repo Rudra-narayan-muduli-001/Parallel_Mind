@@ -1,9 +1,9 @@
 from rich.console import Console
 from rich.table import Table
 
-from config.settings import settings
-from config.routing_table import ROUTING_TABLE
 from config.effort_presets import EFFORT_PRESETS
+from config.routing_table import ROUTING_TABLE
+from config.settings import settings
 from core.providers.model_catalog import ModelCatalog
 from utils.validation import validate_routing_table_against_catalog
 

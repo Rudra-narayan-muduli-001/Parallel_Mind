@@ -1,5 +1,5 @@
-from core.models import AgentTask, AgentResult
 from core.aggregation.base import AggregationStrategy
+from core.models import AgentResult, AgentTask
 
 
 class ConcatAggregator(AggregationStrategy):

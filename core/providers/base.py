@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
-from core.providers.key_pool import APIKeyPool
+
 from core.providers.circuit_breaker import CircuitBreaker
+from core.providers.key_pool import APIKeyPool
 
 
 @dataclass

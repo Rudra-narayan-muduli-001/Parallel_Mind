@@ -5,16 +5,15 @@ from core.models import AgentTask
 class CodeReviewerAgent(BaseAgent):
     async def execute(self, task: AgentTask, provider, model: str, api_key: str, gen_params: dict) -> dict:
         file_path = task.metadata.get("file_path", "unknown")
-        prompt = f"""You are an expert code reviewer. Review the following code for bugs, security issues, and best practices.
-
-File: {file_path}
-Code:
-```{task.prompt}```
-
-Provide a structured review covering:
-1. Critical issues (bugs, security)
-2. Code quality concerns
-3. Suggestions for improvement"""
+        prompt = (
+            f"You are an expert code reviewer. Review the following code "
+            f"for bugs, security issues, and best practices.\n\n"
+            f"File: {file_path}\nCode:\n```\n{task.prompt}\n```\n\n"
+            f"Provide a structured review covering:\n"
+            f"1. Critical issues (bugs, security)\n"
+            f"2. Code quality concerns\n"
+            f"3. Suggestions for improvement"
+        )
         response = await provider.call(model, prompt, api_key, **gen_params)
         return {
             "text": response.text,

@@ -1,11 +1,12 @@
 import pytest
-from core.models import AgentTask, AgentResult
+
 from core.aggregation.strategies import (
     ConcatAggregator,
+    DedupeMergeAggregator,
     FirstSuccessAggregator,
     VotingAggregator,
-    DedupeMergeAggregator,
 )
+from core.models import AgentResult, AgentTask
 
 
 @pytest.mark.asyncio

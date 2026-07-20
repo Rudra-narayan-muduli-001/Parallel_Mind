@@ -1,8 +1,8 @@
 import json
 from abc import ABC, abstractmethod
 
+from config.routing_table import DEFAULT_TIER, ROUTING_TABLE
 from core.router.candidate_rotation import RotatingCandidatePool
-from config.routing_table import ROUTING_TABLE, DEFAULT_TIER
 
 
 class RoutingPolicy(ABC):

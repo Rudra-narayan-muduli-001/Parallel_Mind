@@ -1,12 +1,13 @@
 import asyncio
+
 import typer
 from rich.console import Console
 
+from config.routing_table import ROUTING_TABLE
 from config.settings import settings
+from core.providers.model_catalog import ModelCatalog
 from utils.logger import setup_logging
 from utils.validation import validate_routing_table_against_catalog
-from core.providers.model_catalog import ModelCatalog
-from config.routing_table import ROUTING_TABLE
 
 console = Console()
 app = typer.Typer(name="parallelmind")

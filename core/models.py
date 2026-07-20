@@ -1,5 +1,6 @@
+from typing import Any, Literal, Optional
+
 from pydantic import BaseModel
-from typing import Optional, Any, Literal
 
 ComplexityTier = Literal["low", "mid", "high", "xhigh", "max"]
 

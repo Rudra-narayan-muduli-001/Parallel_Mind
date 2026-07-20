@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from core.models import AgentTask, AgentResult
+
+from core.models import AgentResult, AgentTask
 
 
 class AggregationStrategy(ABC):

@@ -1,6 +1,7 @@
 import pytest
-from core.models import AgentTask
+
 from core.executor import AgentExecutor
+from core.models import AgentTask
 
 
 class MockProvider:

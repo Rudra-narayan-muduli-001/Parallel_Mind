@@ -1,13 +1,13 @@
-from config.settings import settings
+from cli.display import console
+from cli.wizard import run_wizard
 from config.effort_presets import EFFORT_PRESETS
-from core.providers.model_catalog import ModelCatalog
-from core.providers.registry import build_providers
-from core.router.policies import RuleBasedPolicy, ManualPolicy
-from core.router.router import Router
+from config.settings import settings
 from core.executor import AgentExecutor
 from core.orchestrator import Orchestrator
-from cli.wizard import run_wizard
-from cli.display import console
+from core.providers.model_catalog import ModelCatalog
+from core.providers.registry import build_providers
+from core.router.policies import ManualPolicy, RuleBasedPolicy
+from core.router.router import Router
 from pipelines.research.pipeline import ResearchPipeline
 
 

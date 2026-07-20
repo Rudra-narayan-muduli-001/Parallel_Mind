@@ -2,14 +2,40 @@
 name = "parallelmind"
 version = "0.1.0"
 description = "Lightweight parallel AI agent orchestration framework"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "PyYAML>=6.0.1",
+    "pythonjsonlogger>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
 
 [project.scripts]
 parallelmind = "cli.main:app"
 
-[tool.black]
-target-version = ["py312"]
+[tool.ruff]
+target-version = "py312"
 line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+testpaths = ["tests", "cli"]
