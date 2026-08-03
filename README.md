@@ -124,10 +124,10 @@ parallelmind config
 ### 📚 Research Pipeline (`pipelines/research/`)
 
 ```
-┌─────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────┐   ┌─────────┐
-│  Topic  │──▶│ Planner (LLM       │──▶│ Parallel Researcher│──▶│ LLM Synthesis  │──▶│ Report  │
-└─────────┘   │ decomposition)     │   │ Agents (5x conc.) │   │ Aggregator     │   └─────────┘
-              └────────────────────┘   └────────────────────┘   └────────────────┘
+┌─────────┐    ┌────────────────────┐     ┌────────────────────┐    ┌────────────────┐    ┌─────────┐
+│  Topic  │──▶│ Planner (LLM       │──▶│ Parallel Researcher│──▶│ LLM Synthesis │──▶│ Report  │
+└─────────┘    │ decomposition)     │     │ Agents (5x conc.)  │    │ Aggregator     │    └─────────┘
+               └────────────────────┘     └────────────────────┘    └────────────────┘
 ```
 
 - `ResearchPlanner` decomposes a topic into 3-5 sub-questions with complexity tiers
@@ -137,10 +137,10 @@ parallelmind config
 ### 🔍 Code Review Pipeline (`pipelines/code_review/`)
 
 ```
-┌────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────┐   ┌─────────┐
+┌────────┐    ┌────────────────────┐     ┌────────────────────┐    ┌────────────────┐     ┌─────────┐
 │  Path  │──▶│ Splitter (file +   │──▶│ Parallel Reviewer  │──▶│ Dedupe Merge   │──▶│ Report  │
-└────────┘   │ tier assignment)   │   │ Agents (5x conc.)  │   │ Aggregator     │   └─────────┘
-             └────────────────────┘   └────────────────────┘   └────────────────┘
+└────────┘    │ tier assignment)   │     │ Agents (5x conc.)  │    │ Aggregator     │     └─────────┘
+              └────────────────────┘     └────────────────────┘    └────────────────┘
 ```
 
 - `CodeReviewSplitter` discovers source files and assigns complexity tiers by line count
