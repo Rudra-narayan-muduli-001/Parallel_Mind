@@ -32,8 +32,12 @@ without touching the core.
 ```
 
 ┌──────────────────────────────────────────────────────────────────┐
-│                          CLI Layer                                │
-│   Default / Manual Wizard → builds a RunConfig                    │
+│                    Entry Points                                     │
+│  ┌──────────────────────────────┐  ┌───────────────────────────┐   │
+│  │ CLI (Typer + Rich)           │  │ Web (FastAPI)             │   │
+│  │ Default / Manual Wizard      │  │ REST + SSE endpoints      │   │
+│  │ → builds a RunConfig         │  │ → serves dashboard UI     │   │
+│  └──────────────┬───────────────┘  └────────────┬──────────────┘   │
 └───────────────────────────┬────────────────────────────────────────┘
                             │
                             ▼
@@ -100,19 +104,33 @@ without touching the core.
 - `RunConfig` determines which `RoutingPolicy` and generation parameters (effort) are used for the entire run.
 - Never contains business logic — only collects input and delegates to pipelines.
 
-### 4.2 Pipeline Layer (`pipelines/`)
+### 4.2 Web Layer (`web/`)
+
+- FastAPI-based web server exposing REST + SSE streaming endpoints.
+- Serves a single-page dashboard (Jinja2 templates + vanilla JS) with tabs for Research, Review, Providers, and Config.
+- Endpoints:
+  - `GET /` — Dashboard HTML
+  - `GET /api/providers` — Provider health/status
+  - `GET /api/config` — System configuration
+  - `GET /api/models` — Available models from catalog
+  - `GET /api/effort-presets` — Effort preset parameters
+  - `POST /api/research` — Start research pipeline (SSE stream)
+  - `POST /api/review` — Start code review pipeline (SSE stream)
+- Reuses the same pipeline, orchestrator, router, and executor layers as the CLI — no duplicated logic.
+
+### 4.3 Pipeline Layer (`pipelines/`)
 - Converts a high-level user request (a topic, a repo path) into a `List[AgentTask]`.
 - **Research:** `planner.py` makes one LLM call to decompose a topic into sub-questions, each tagged with a `complexity_tier`.
 - **Code Review:** `splitter.py` parses a repo (no LLM call) and assigns a `complexity_tier` per file using a local heuristic (line count).
 - Each pipeline selects its `AggregationStrategy` (Research → `LLMSynthesisAggregator`, Code Review → `DedupeMergeAggregator`).
 
-### 4.3 Orchestrator (`core/orchestrator.py`)
+### 4.4 Orchestrator (`core/orchestrator.py`)
 - Owns the concurrency cap via `asyncio.Semaphore`.
 - Dispatches all `AgentTask`s concurrently using `asyncio.gather(..., return_exceptions=True)`.
 - Guarantees one failing task never terminates the batch.
 - Has no knowledge of providers, routing, or aggregation — purely a concurrency/dispatch layer.
 
-### 4.4 Router (`core/router/`)
+### 4.5 Router (`core/router/`)
 - Central decision point: **"which (provider, model) candidates should this task try, and in what order?"**
 - Returns an **ordered list**, not a single choice — this enables immediate failover downstream.
 - Three interchangeable policies (see `agents.md` for details):
@@ -121,7 +139,7 @@ without touching the core.
   - `LLMRouterPolicy` — a meta LLM call ranks candidates dynamically (optional, opt-in).
 - `RotatingCandidatePool` ensures successive tasks rotate their starting candidate, spreading load evenly instead of hammering the first entry.
 
-### 4.5 Executor (`core/executor.py`)
+### 4.6 Executor (`core/executor.py`)
 - Receives a task + ordered candidate list + generation params.
 - Walks the candidate list **in order**, skipping instantly (no sleep/backoff) on:
   - Open circuit breaker for a provider
@@ -130,25 +148,25 @@ without touching the core.
 - On the first success, returns immediately.
 - If all candidates are exhausted, returns a failed `AgentResult` — isolated and does not propagate to other tasks.
 
-### 4.6 Provider Layer (`core/providers/`)
+### 4.7 Provider Layer (`core/providers/`)
 - `BaseProvider` — abstract interface all providers implement (`call()`, `is_healthy()`, `is_enabled()`).
 - `OpenAICompatibleProvider` — single implementation reused for 5 providers (OpenAI, Groq, OpenRouter, NVIDIA NIM, OpenCode Zen) since they share the same `/chat/completions` schema; differs only by `base_url`/`api_keys`/`default_model` from config.
 - `AnthropicProvider` — separate implementation due to differing `/v1/messages` schema.
 - Each provider instance owns exactly one `APIKeyPool` and one `CircuitBreaker`.
 - `ModelCatalog` (`model_catalog.py`) loads `config/model_catalog.yaml` and exposes queryable model lists — used by both the CLI wizard (for menus) and startup validation (routing table consistency check).
 
-### 4.7 APIKeyPool (`core/providers/key_pool.py`)
+### 4.8 APIKeyPool (`core/providers/key_pool.py`)
 - Round-robins across all configured keys for a provider.
 - Tracks per-key health: failure count, cooldown timestamp.
 - A key that fails repeatedly is marked unhealthy and skipped until cooldown expires.
 - `get_key()` raises `NoAvailableKeyError` if all keys are unhealthy — signals the Executor to skip this provider and move to the next candidate.
 
-### 4.8 CircuitBreaker (`core/providers/circuit_breaker.py`)
+### 4.9 CircuitBreaker (`core/providers/circuit_breaker.py`)
 - One instance per provider (key-level health is handled by `APIKeyPool`).
 - States: `CLOSED` (normal) → `OPEN` (provider disabled after N consecutive failures) → `HALF_OPEN` (after cooldown, allows a trial request) → back to `CLOSED` on success.
 - Prevents wasting requests on a provider that is clearly down.
 
-### 4.9 Aggregation Layer (`core/aggregation/`)
+### 4.10 Aggregation Layer (`core/aggregation/`)
 - `AggregationStrategy` is an abstract interface — every aggregator implements `aggregate(task, results)`.
 - Strategy is chosen **per pipeline**, not globally:
   - Research → `LLMSynthesisAggregator` (one more LLM call to merge findings into a coherent report).
@@ -248,6 +266,8 @@ No retry-with-backoff is used when redundant candidates exist — failover is im
 | Async HTTP | `httpx` |
 | Data validation | `pydantic` / `pydantic-settings` |
 | CLI | `typer` + `rich` |
+| Web server | `fastapi` + `uvicorn` |
+| Templating | `jinja2` |
 | Config parsing | `PyYAML` |
 | Logging | `pythonjsonlogger` (optional) |
 | Testing | `pytest` + `pytest-asyncio` |
@@ -257,6 +277,5 @@ No retry-with-backoff is used when redundant candidates exist — failover is im
 ## 11. Non-Goals (v1)
 
 - No persistent job queue (Redis/Kafka) — in-memory `asyncio` orchestration only.
-- No web UI/dashboard — CLI only.
 - No cross-agent shared memory in default pipelines — isolation by design.
 - No multi-language runtime — Python only.
