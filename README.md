@@ -48,6 +48,7 @@
 | 🎯 **Routing** | 5-tier complexity routing (low / mid / high / xhigh / max) per task type |
 | 🧭 **Routing Modes** | Rule-based (default), Manual (user-selected), LLM-based (meta-router) |
 | 💬 **CLI** | Interactive wizard with Default and Manual modes |
+| 🌐 **Web UI** | Browser-based dashboard with SSE streaming for Research and Review pipelines |
 | 📊 **Pipelines** | Research (topic decomposition + parallel synthesis), Code Review (file-aware parallel review) |
 
 ---
@@ -83,14 +84,18 @@ parallelmind research "Explain quantum computing fundamentals"
 # 4️⃣ Run a code review
 parallelmind review ./src
 
-# 5️⃣ Check provider status
+# 5️⃣ Launch the web UI
+parallelmind web
+
+# 6️⃣ Check provider status
 parallelmind providers
 
-# 6️⃣ Validate configuration
+# 7️⃣ Validate configuration
 parallelmind config
 ```
 
 > 🎮 Run `parallelmind` without arguments to enter the interactive CLI wizard.
+> 🌐 Run `parallelmind web` to open the browser dashboard.
 
 ---
 
@@ -100,6 +105,7 @@ parallelmind config
 |---|---|
 | 📚 `parallelmind research <topic>` | Decompose a topic into sub-questions, research in parallel, synthesize a report |
 | 🔍 `parallelmind review <path>` | Review all supported source files in a directory in parallel |
+| 🌐 `parallelmind web` | Launch the web dashboard (default: http://127.0.0.1:8080) |
 | 📡 `parallelmind providers` | Show configured providers and their health status |
 | ✅ `parallelmind config` | Validate routing table, show settings, check model catalog |
 
@@ -187,6 +193,7 @@ Parallel Mind/
 ├── 📂 pipelines/
 │   ├── 📂 research/         Research pipeline (planner + researcher + aggregator)
 │   └── 📂 code_review/      Code review pipeline (splitter + reviewer + aggregator)
+├── 📂 web/                  FastAPI web server: server, templates, static assets
 ├── 📂 utils/                Logging and validation utilities
 ├── 📂 tests/                Core unit tests
 ├── 📄 architecture.md       Full system architecture document
