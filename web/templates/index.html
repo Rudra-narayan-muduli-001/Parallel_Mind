@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParallelMind</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">⬡</span>
+                <span class="logo-text">ParallelMind</span>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-tab="research">
+                    <span class="nav-icon">📚</span> Research
+                </button>
+                <button class="nav-btn" data-tab="review">
+                    <span class="nav-icon">🔍</span> Review
+                </button>
+                <button class="nav-btn" data-tab="providers">
+                    <span class="nav-icon">📡</span> Providers
+                </button>
+                <button class="nav-btn" data-tab="config">
+                    <span class="nav-icon">⚙️</span> Config
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <span class="version">v0.1.0</span>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Research Tab -->
+            <section class="tab-content active" id="tab-research">
+                <div class="chat-container">
+                    <div class="chat-messages" id="research-messages">
+                        <div class="chat-welcome" id="research-welcome">
+                            <div class="welcome-icon">📚</div>
+                            <h2>Research Assistant</h2>
+                            <p>Ask me any topic and I'll decompose it into sub-questions, research them in parallel, and synthesize a comprehensive report.</p>
+                            <div class="welcome-examples">
+                                <button class="example-chip" data-topic="Explain quantum computing fundamentals">Quantum Computing</button>
+                                <button class="example-chip" data-topic="How do large language models work?">LLMs Explained</button>
+                                <button class="example-chip" data-topic="What are the latest advances in renewable energy?">Renewable Energy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrapper">
+                            <textarea id="research-input" placeholder="Ask a research topic... (Enter to send, Shift+Enter for new line)" rows="1"></textarea>
+                            <button class="chat-send-btn" id="btn-research" title="Start Research">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+                            </button>
+                        </div>
+                        <div class="chat-controls">
+                            <select id="research-mode">
+                                <option value="default">Default</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                            <select id="research-effort" style="display:none">
+                                <option value="low">Low Effort</option>
+                                <option value="high">High Effort</option>
+                            </select>
+                            <button class="targets-toggle" id="btn-research-targets" title="Select providers/models">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 10 3.17V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            </button>
+                        </div>
+                        <div class="targets-panel" id="research-targets-panel" style="display:none">
+                            <div class="targets-list" id="research-targets"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Review Tab -->
+            <section class="tab-content" id="tab-review">
+                <header class="tab-header">
+                    <h1>Code Review</h1>
+                    <p class="subtitle">Review all supported source files in a directory in parallel.</p>
+                </header>
+
+                <div class="card">
+                    <label class="label">Path</label>
+                    <input type="text" id="review-path" placeholder="./src" value="./" />
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="label">Mode</label>
+                            <select id="review-mode">
+                                <option value="default">Default (Rule-based)</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                        </div>
+                        <div class="form-group manual-only" style="display:none">
+                            <label class="label">Effort</label>
+                            <select id="review-effort">
+                                <option value="low">Low</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group manual-only" style="display:none">
+                        <label class="label">Providers & Models</label>
+                        <div class="targets-list" id="review-targets"></div>
+                    </div>
+
+                    <button class="btn btn-primary" id="btn-review">
+                        <span class="btn-icon">🔍</span> Start Review
+                    </button>
+                </div>
+
+                <div class="card result-card" id="review-result" style="display:none">
+                    <div class="result-header">
+                        <h3>Result</h3>
+                        <span class="status-badge" id="review-status"></span>
+                    </div>
+                    <div class="result-body" id="review-output"></div>
+                </div>
+            </section>
+
+            <!-- Providers Tab -->
+            <section class="tab-content" id="tab-providers">
+                <header class="tab-header">
+                    <h1>Providers</h1>
+                    <p class="subtitle">Configured LLM providers and their health status.</p>
+                </header>
+
+                <div class="card">
+                    <div id="providers-list" class="providers-grid">
+                        <p class="loading">Loading providers...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Config Tab -->
+            <section class="tab-content" id="tab-config">
+                <header class="tab-header">
+                    <h1>Configuration</h1>
+                    <p class="subtitle">Current system configuration and available models.</p>
+                </header>
+
+                <div class="card">
+                    <h3 class="section-title">Settings</h3>
+                    <div id="config-list" class="config-list">
+                        <p class="loading">Loading config...</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="section-title">Available Models</h3>
+                    <div id="models-list" class="models-list">
+                        <p class="loading">Loading models...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
