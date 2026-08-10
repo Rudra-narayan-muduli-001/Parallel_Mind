@@ -4,6 +4,8 @@ const state = {
     providers: {},
     researchTargetsOpen: false,
     researchBusy: false,
+    conversations: JSON.parse(localStorage.getItem('pm_conversations') || '[]'),
+    currentConvId: null,
 };
 
 // DOM Helpers
@@ -23,17 +25,158 @@ $$('.nav-btn').forEach(btn => {
     });
 });
 
+// ===== HISTORY MANAGEMENT =====
+function saveConversations() {
+    localStorage.setItem('pm_conversations', JSON.stringify(state.conversations));
+    renderHistory();
+}
+
+function renderHistory() {
+    const list = $('#history-list');
+    if (state.conversations.length === 0) {
+        list.innerHTML = '<p class="history-empty">No conversations yet</p>';
+        return;
+    }
+
+    list.innerHTML = '';
+    const sorted = [...state.conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+
+    sorted.forEach(conv => {
+        const item = document.createElement('div');
+        item.className = 'history-item' + (conv.id === state.currentConvId ? ' active' : '');
+
+        const btn = document.createElement('button');
+        btn.className = 'history-item-btn';
+        btn.textContent = conv.title;
+        btn.title = conv.title;
+        btn.addEventListener('click', () => loadConversation(conv.id));
+
+        const del = document.createElement('button');
+        del.className = 'history-item-delete';
+        del.textContent = '✕';
+        del.title = 'Delete conversation';
+        del.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm('Delete this conversation?')) {
+                deleteConversation(conv.id);
+            }
+        });
+
+        item.appendChild(btn);
+        item.appendChild(del);
+        list.appendChild(item);
+    });
+}
+
+function deleteConversation(id) {
+    state.conversations = state.conversations.filter(c => c.id !== id);
+    if (state.currentConvId === id) {
+        state.currentConvId = null;
+        clearChatMessages();
+    }
+    saveConversations();
+}
+
+function clearAllHistory() {
+    if (state.conversations.length === 0) return;
+    if (!confirm('Delete ALL conversation history?')) return;
+    state.conversations = [];
+    state.currentConvId = null;
+    clearChatMessages();
+    saveConversations();
+}
+
+function clearChatMessages() {
+    const container = $('#research-messages');
+    container.innerHTML = '';
+    const welcome = document.createElement('div');
+    welcome.className = 'chat-welcome';
+    welcome.id = 'research-welcome';
+    welcome.innerHTML = `
+        <div class="welcome-icon">📚</div>
+        <h2>Research Assistant</h2>
+        <p>Ask me any topic and I'll decompose it into sub-questions, research them in parallel, and synthesize a comprehensive report.</p>
+        <div class="welcome-examples">
+            <button class="example-chip" data-topic="Explain quantum computing fundamentals">Quantum Computing</button>
+            <button class="example-chip" data-topic="How do large language models work?">LLMs Explained</button>
+            <button class="example-chip" data-topic="What are the latest advances in renewable energy?">Renewable Energy</button>
+        </div>
+    `;
+    container.appendChild(welcome);
+    rebindExampleChips();
+    $('#current-chat-title').textContent = '';
+}
+
+function newConversation() {
+    state.currentConvId = null;
+    clearChatMessages();
+    renderHistory();
+    researchInput.focus();
+}
+
+function loadConversation(id) {
+    const conv = state.conversations.find(c => c.id === id);
+    if (!conv) return;
+
+    state.currentConvId = id;
+    renderHistory();
+
+    const container = $('#research-messages');
+    container.innerHTML = '';
+
+    conv.messages.forEach(msg => {
+        if (msg.role === 'user') {
+            addMessageRaw('user', msg.content);
+        } else {
+            addMessageRaw('assistant', msg.content);
+        }
+    });
+
+    $('#current-chat-title').textContent = conv.title;
+    scrollToBottom();
+}
+
+function addMessageRaw(role, text) {
+    const container = $('#research-messages');
+    const msg = document.createElement('div');
+    msg.className = 'chat-message';
+
+    const avatar = document.createElement('div');
+    avatar.className = `message-avatar ${role}`;
+    avatar.textContent = role === 'user' ? '👤' : '⬡';
+
+    const content = document.createElement('div');
+    content.className = 'message-content';
+
+    const label = document.createElement('div');
+    label.className = 'message-label';
+    label.textContent = role === 'user' ? 'You' : 'Research Result';
+
+    const textEl = document.createElement('div');
+    textEl.className = role === 'assistant' ? 'markdown-body' : 'message-text';
+
+    if (role === 'assistant') {
+        textEl.innerHTML = marked.parse(text);
+    } else {
+        textEl.textContent = text;
+    }
+
+    content.appendChild(label);
+    content.appendChild(textEl);
+    msg.appendChild(avatar);
+    msg.appendChild(content);
+    container.appendChild(msg);
+}
+
 // ===== RESEARCH CHAT =====
 const researchInput = $('#research-input');
 const btnResearch = $('#btn-research');
 
-// Auto-resize textarea
 researchInput.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 150) + 'px';
 });
 
-// Enter to send, Shift+Enter for newline
 researchInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -43,14 +186,16 @@ researchInput.addEventListener('keydown', function (e) {
 
 btnResearch.addEventListener('click', startResearch);
 
-// Example chips
-$$('.example-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-        researchInput.value = chip.dataset.topic;
-        researchInput.focus();
-        startResearch();
+function rebindExampleChips() {
+    $$('.example-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            researchInput.value = chip.dataset.topic;
+            researchInput.focus();
+            startResearch();
+        });
     });
-});
+}
+rebindExampleChips();
 
 // Mode toggle
 $('#research-mode').addEventListener('change', function () {
@@ -113,12 +258,31 @@ function startResearch() {
     researchInput.value = '';
     researchInput.style.height = 'auto';
 
+    // Create conversation if new
+    if (!state.currentConvId) {
+        state.currentConvId = 'conv_' + Date.now();
+        state.conversations.push({
+            id: state.currentConvId,
+            title: topic.length > 40 ? topic.substring(0, 40) + '...' : topic,
+            messages: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+    }
+
+    // Save user message
+    const conv = state.conversations.find(c => c.id === state.currentConvId);
+    conv.messages.push({ role: 'user', content: topic });
+    conv.updatedAt = Date.now();
+    $('#current-chat-title').textContent = conv.title;
+    saveConversations();
+
     fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, mode, effort, targets }),
     })
-    .then(resp => handleStream(resp, assistantEl))
+    .then(resp => handleStream(resp, assistantEl, conv))
     .catch(err => {
         updateMessage(assistantEl, '**Error:** ' + err.message, false);
     })
@@ -183,7 +347,11 @@ function scrollToBottom() {
     container.scrollTop = container.scrollHeight;
 }
 
-// ===== REVIEW (unchanged structure) =====
+// ===== NEW CONVERSATION & CLEAR ALL =====
+$('#btn-new-chat').addEventListener('click', newConversation);
+$('#btn-clear-all').addEventListener('click', clearAllHistory);
+
+// ===== REVIEW =====
 $('#review-mode').addEventListener('change', function () {
     const isManual = this.value === 'manual';
     $$('#tab-review .manual-only').forEach(el => {
@@ -214,7 +382,7 @@ $('#btn-review').addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path, mode, effort, targets }),
         });
-        await handleStream(resp, output, status);
+        await handleStreamReview(resp, output, status);
     } catch (err) {
         status.className = 'status-badge error';
         status.textContent = 'Error';
@@ -224,8 +392,8 @@ $('#btn-review').addEventListener('click', async () => {
     }
 });
 
-// ===== STREAM HANDLER (works for both chat and card) =====
-async function handleStream(resp, el, statusEl) {
+// ===== STREAM HANDLERS =====
+async function handleStream(resp, assistantEl, conv) {
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -247,36 +415,64 @@ async function handleStream(resp, el, statusEl) {
             try {
                 const event = JSON.parse(data);
                 if (event.type === 'status') {
-                    if (statusEl) {
-                        statusEl.className = 'status-badge running';
-                        statusEl.textContent = 'Running...';
-                    }
+                    // typing indicator stays
                 } else if (event.type === 'result') {
                     fullText = typeof event.output === 'string'
                         ? event.output
                         : JSON.stringify(event.output, null, 2);
-                    if (el.classList && el.classList.contains('chat-message')) {
-                        updateMessage(el, fullText, false);
-                    } else {
-                        el.innerHTML = marked.parse(fullText);
-                    }
-                    if (statusEl) {
-                        statusEl.className = 'status-badge success';
-                        statusEl.textContent = 'Complete';
+                    updateMessage(assistantEl, fullText, false);
+                    if (conv) {
+                        conv.messages.push({ role: 'assistant', content: fullText });
+                        conv.updatedAt = Date.now();
+                        saveConversations();
                     }
                 } else if (event.type === 'error') {
-                    if (el.classList && el.classList.contains('chat-message')) {
-                        updateMessage(el, '**Error:** ' + event.message, false);
-                    } else {
-                        el.textContent = event.message;
-                    }
-                    if (statusEl) {
-                        statusEl.className = 'status-badge error';
-                        statusEl.textContent = 'Error';
-                    }
+                    updateMessage(assistantEl, '**Error:** ' + event.message, false);
                 }
             } catch (e) {
-                // skip malformed JSON
+                // skip
+            }
+        }
+    }
+}
+
+async function handleStreamReview(resp, outputEl, statusEl) {
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+                const event = JSON.parse(data);
+                if (event.type === 'status') {
+                    statusEl.className = 'status-badge running';
+                    statusEl.textContent = 'Running...';
+                } else if (event.type === 'result') {
+                    const text = typeof event.output === 'string'
+                        ? event.output
+                        : JSON.stringify(event.output, null, 2);
+                    outputEl.innerHTML = marked.parse(text);
+                    statusEl.className = 'status-badge success';
+                    statusEl.textContent = 'Complete';
+                } else if (event.type === 'error') {
+                    outputEl.textContent = event.message;
+                    statusEl.className = 'status-badge error';
+                    statusEl.textContent = 'Error';
+                }
+            } catch (e) {
+                // skip
             }
         }
     }
@@ -388,3 +584,6 @@ if (typeof marked !== 'undefined') {
         gfm: true,
     });
 }
+
+// Init
+renderHistory();
