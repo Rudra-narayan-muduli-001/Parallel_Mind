@@ -1,18 +1,30 @@
-// State
+// ===== STATE =====
 const state = {
     models: [],
-    providers: {},
+    busy: false,
     researchTargetsOpen: false,
-    researchBusy: false,
-    conversations: JSON.parse(localStorage.getItem('pm_conversations') || '[]'),
     currentConvId: null,
+    conversations: [],
 };
 
-// DOM Helpers
+// Try to load from localStorage, fallback to empty array
+try {
+    const stored = localStorage.getItem('pm_conversations');
+    state.conversations = stored ? JSON.parse(stored) : [];
+} catch (e) {
+    state.conversations = [];
+}
+
+// ===== Helpers =====
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return document.querySelectorAll(sel); }
+function esc(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-// ===== TAB NAVIGATION =====
+// ===== TAB NAV =====
 $$('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         $$('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -25,46 +37,53 @@ $$('.nav-btn').forEach(btn => {
     });
 });
 
-// ===== HISTORY MANAGEMENT =====
-function saveConversations() {
-    localStorage.setItem('pm_conversations', JSON.stringify(state.conversations));
+// ===== HISTORY =====
+function saveHistory() {
+    try {
+        localStorage.setItem('pm_conversations', JSON.stringify(state.conversations));
+    } catch (e) {}
     renderHistory();
 }
 
 function renderHistory() {
     const list = $('#history-list');
-    if (state.conversations.length === 0) {
-        list.innerHTML = '<p class="history-empty">No conversations yet</p>';
+    if (!list) return;
+
+    if (!state.conversations.length) {
+        list.innerHTML = '<p class="history-empty">No conversations</p>';
         return;
     }
 
-    list.innerHTML = '';
     const sorted = [...state.conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+    let html = '';
 
     sorted.forEach(conv => {
-        const item = document.createElement('div');
-        item.className = 'history-item' + (conv.id === state.currentConvId ? ' active' : '');
+        const activeCls = conv.id === state.currentConvId ? ' active' : '';
+        const shortTitle = conv.title.length > 40 ? conv.title.substring(0, 40) + '…' : conv.title;
+        html += `
+            <div class="history-item${activeCls}" data-id="${conv.id}">
+                <button class="history-item-btn" data-title="${esc(conv.title)}" title="${esc(conv.title)}">${esc(shortTitle)}</button>
+                <button class="history-item-delete" data-id="${conv.id}" title="Delete">✕</button>
+            </div>`;
+    });
 
-        const btn = document.createElement('button');
-        btn.className = 'history-item-btn';
-        btn.textContent = conv.title;
-        btn.title = conv.title;
-        btn.addEventListener('click', () => loadConversation(conv.id));
+    list.innerHTML = html;
 
-        const del = document.createElement('button');
-        del.className = 'history-item-delete';
-        del.textContent = '✕';
-        del.title = 'Delete conversation';
-        del.addEventListener('click', (e) => {
-            e.stopPropagation();
+    // Bind click events
+    list.querySelectorAll('.history-item-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.closest('.history-item').dataset.id;
+            loadConversation(id);
+        });
+    });
+
+    list.querySelectorAll('.history-item-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
             if (confirm('Delete this conversation?')) {
-                deleteConversation(conv.id);
+                deleteConversation(id);
             }
         });
-
-        item.appendChild(btn);
-        item.appendChild(del);
-        list.appendChild(item);
     });
 }
 
@@ -72,132 +91,103 @@ function deleteConversation(id) {
     state.conversations = state.conversations.filter(c => c.id !== id);
     if (state.currentConvId === id) {
         state.currentConvId = null;
-        clearChatMessages();
+        clearChatUI();
     }
-    saveConversations();
+    saveHistory();
 }
 
 function clearAllHistory() {
-    if (state.conversations.length === 0) return;
-    if (!confirm('Delete ALL conversation history?')) return;
+    if (!state.conversations.length) return;
+    if (!confirm('Delete ALL conversations?')) return;
     state.conversations = [];
     state.currentConvId = null;
-    clearChatMessages();
-    saveConversations();
+    clearChatUI();
+    saveHistory();
 }
 
-function clearChatMessages() {
-    const container = $('#research-messages');
-    container.innerHTML = '';
-    const welcome = document.createElement('div');
-    welcome.className = 'chat-welcome';
-    welcome.id = 'research-welcome';
-    welcome.innerHTML = `
-        <div class="welcome-icon">📚</div>
-        <h2>Research Assistant</h2>
-        <p>Ask me any topic and I'll decompose it into sub-questions, research them in parallel, and synthesize a comprehensive report.</p>
-        <div class="welcome-examples">
-            <button class="example-chip" data-topic="Explain quantum computing fundamentals">Quantum Computing</button>
-            <button class="example-chip" data-topic="How do large language models work?">LLMs Explained</button>
-            <button class="example-chip" data-topic="What are the latest advances in renewable energy?">Renewable Energy</button>
-        </div>
-    `;
-    container.appendChild(welcome);
-    rebindExampleChips();
-    $('#current-chat-title').textContent = '';
-}
-
-function newConversation() {
-    state.currentConvId = null;
-    clearChatMessages();
+function clearChatUI() {
+    const container = document.getElementById('research-messages');
+    const conv = state.conversations.find(c => c.id === state.currentConvId);
+    if (conv) {
+        // load messages
+        container.innerHTML = '';
+        conv.messages.forEach(m => addMessageDOM(m.role, m.content));
+        document.getElementById('current-chat-title').textContent = conv.title;
+        state.currentConvId = conv.id;
+    } else {
+        // show welcome
+        container.innerHTML = '';
+        const welcome = document.createElement('div');
+        welcome.className = 'chat-welcome';
+        welcome.id = 'research-welcome';
+        welcome.innerHTML = `
+            <div class="welcome-icon">📚</div>
+            <h2>Research Assistant</h2>
+            <p>Ask me any topic and I'll decompose it into sub-questions, research them in parallel, and synthesize a comprehensive report.</p>
+            <div class="welcome-examples">
+                <button class="example-chip" data-topic="Explain quantum computing fundamentals">Quantum Computing</button>
+                <button class="example-chip" data-topic="How do large language models work?">LLMs Explained</button>
+                <button class="example-chip" data-topic="What are the latest advances in renewable energy?">Renewable Energy</button>
+            </div>`;
+        container.appendChild(welcome);
+        document.getElementById('current-chat-title').textContent = '';
+        state.currentConvId = null;
+        rebindChips();
+    }
     renderHistory();
-    researchInput.focus();
+    scrollChat();
 }
 
 function loadConversation(id) {
     const conv = state.conversations.find(c => c.id === id);
     if (!conv) return;
-
     state.currentConvId = id;
-    renderHistory();
-
-    const container = $('#research-messages');
-    container.innerHTML = '';
-
-    conv.messages.forEach(msg => {
-        if (msg.role === 'user') {
-            addMessageRaw('user', msg.content);
-        } else {
-            addMessageRaw('assistant', msg.content);
-        }
-    });
-
-    $('#current-chat-title').textContent = conv.title;
-    scrollToBottom();
+    clearChatUI();
 }
 
-function addMessageRaw(role, text) {
-    const container = $('#research-messages');
-    const msg = document.createElement('div');
-    msg.className = 'chat-message';
-
-    const avatar = document.createElement('div');
-    avatar.className = `message-avatar ${role}`;
-    avatar.textContent = role === 'user' ? '👤' : '⬡';
-
-    const content = document.createElement('div');
-    content.className = 'message-content';
-
-    const label = document.createElement('div');
-    label.className = 'message-label';
-    label.textContent = role === 'user' ? 'You' : 'Research Result';
-
-    const textEl = document.createElement('div');
-    textEl.className = role === 'assistant' ? 'markdown-body' : 'message-text';
-
-    if (role === 'assistant') {
-        textEl.innerHTML = marked.parse(text);
-    } else {
-        textEl.textContent = text;
-    }
-
-    content.appendChild(label);
-    content.appendChild(textEl);
-    msg.appendChild(avatar);
-    msg.appendChild(content);
-    container.appendChild(msg);
+function newConversation() {
+    state.currentConvId = null;
+    clearChatUI();
+    document.getElementById('research-input').focus();
 }
 
-// ===== RESEARCH CHAT =====
-const researchInput = $('#research-input');
-const btnResearch = $('#btn-research');
+// Bind buttons
+$('#btn-new-chat').addEventListener('click', newConversation);
+$('#btn-clear-all').addEventListener('click', clearAllHistory);
 
-researchInput.addEventListener('input', function () {
+// ===== CHAT UI =====
+const chatInput = $('#research-input');
+const btnSend = $('#btn-research');
+
+// Auto-resize textarea
+chatInput.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 150) + 'px';
 });
 
-researchInput.addEventListener('keydown', function (e) {
+// Enter to send (Shift+Enter = newline)
+chatInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         startResearch();
     }
 });
 
-btnResearch.addEventListener('click', startResearch);
+btnSend.addEventListener('click', startResearch);
 
-function rebindExampleChips() {
+// Example chips click
+function rebindChips() {
     $$('.example-chip').forEach(chip => {
         chip.addEventListener('click', () => {
-            researchInput.value = chip.dataset.topic;
-            researchInput.focus();
+            chatInput.value = chip.dataset.topic;
+            chatInput.focus();
             startResearch();
         });
     });
 }
-rebindExampleChips();
+rebindChips();
 
-// Mode toggle
+// Mode toggle (research)
 $('#research-mode').addEventListener('change', function () {
     const isManual = this.value === 'manual';
     $('#research-effort').style.display = isManual ? 'block' : 'none';
@@ -205,7 +195,8 @@ $('#research-mode').addEventListener('change', function () {
 });
 
 // Targets toggle
-$('#btn-research-targets').addEventListener('click', () => {
+const btnTargets = $('#btn-research-targets');
+btnTargets.addEventListener('click', () => {
     state.researchTargetsOpen = !state.researchTargetsOpen;
     $('#research-targets-panel').style.display = state.researchTargetsOpen ? 'block' : 'none';
     if (state.researchTargetsOpen) renderTargets('research-targets');
@@ -232,72 +223,11 @@ function getSelectedTargets(containerId) {
     return Array.from(chips).map(c => [c.dataset.provider, c.dataset.model]);
 }
 
-function startResearch() {
-    const topic = researchInput.value.trim();
-    if (!topic || state.researchBusy) return;
-
-    state.researchBusy = true;
-    btnResearch.disabled = true;
-    researchInput.disabled = true;
-
-    const mode = $('#research-mode').value;
-    const effort = $('#research-effort').value;
-    const targets = getSelectedTargets('research-targets');
-
-    // Hide welcome
-    const welcome = $('#research-welcome');
-    if (welcome) welcome.style.display = 'none';
-
-    // Add user message
-    addMessage('user', topic);
-
-    // Add assistant message with typing indicator
-    const assistantEl = addMessage('assistant', '', true);
-
-    // Clear input
-    researchInput.value = '';
-    researchInput.style.height = 'auto';
-
-    // Create conversation if new
-    if (!state.currentConvId) {
-        state.currentConvId = 'conv_' + Date.now();
-        state.conversations.push({
-            id: state.currentConvId,
-            title: topic.length > 40 ? topic.substring(0, 40) + '...' : topic,
-            messages: [],
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        });
-    }
-
-    // Save user message
-    const conv = state.conversations.find(c => c.id === state.currentConvId);
-    conv.messages.push({ role: 'user', content: topic });
-    conv.updatedAt = Date.now();
-    $('#current-chat-title').textContent = conv.title;
-    saveConversations();
-
-    fetch('/api/research', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, mode, effort, targets }),
-    })
-    .then(resp => handleStream(resp, assistantEl, conv))
-    .catch(err => {
-        updateMessage(assistantEl, '**Error:** ' + err.message, false);
-    })
-    .finally(() => {
-        state.researchBusy = false;
-        btnResearch.disabled = false;
-        researchInput.disabled = false;
-        researchInput.focus();
-    });
-}
-
-function addMessage(role, text, isTyping = false) {
-    const container = $('#research-messages');
+function addMessageDOM(role, text, isTyping = false) {
+    const container = document.getElementById('research-messages');
     const msg = document.createElement('div');
     msg.className = 'chat-message';
+    msg.dataset.role = role;
 
     const avatar = document.createElement('div');
     avatar.className = `message-avatar ${role}`;
@@ -316,7 +246,7 @@ function addMessage(role, text, isTyping = false) {
     if (isTyping) {
         textEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
     } else if (role === 'assistant') {
-        textEl.innerHTML = marked.parse(text);
+        try { textEl.innerHTML = marked.parse(text); } catch(e) { textEl.textContent = text; }
     } else {
         textEl.textContent = text;
     }
@@ -326,32 +256,135 @@ function addMessage(role, text, isTyping = false) {
     msg.appendChild(avatar);
     msg.appendChild(content);
     container.appendChild(msg);
-    scrollToBottom();
+    scrollChat();
     return msg;
 }
 
-function updateMessage(msgEl, text, isTyping) {
+function scrollChat() {
+    const c = document.getElementById('research-messages');
+    if (c) c.scrollTop = c.scrollHeight;
+}
+
+function startResearch() {
+    const topic = chatInput.value.trim();
+    if (!topic || state.busy) return;
+
+    state.busy = true;
+    btnSend.disabled = true;
+    chatInput.disabled = true;
+
+    const mode = $('#research-mode').value;
+    const effort = $('#research-effort').value;
+    const targets = getSelectedTargets('research-targets');
+
+    // Hide welcome
+    const welcome = $('#research-welcome');
+    if (welcome) welcome.style.display = 'none';
+
+    // Create new conversation if current is null
+    if (!state.currentConvId) {
+        const convId = 'conv_' + Date.now();
+        const title = topic.length > 40 ? topic.substring(0, 40) + '…' : topic;
+        const conv = {
+            id: convId,
+            title: title,
+            messages: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        };
+        state.conversations.unshift(conv);
+        state.currentConvId = convId;
+    }
+
+    // Add user message to conversation + UI
+    const conv = state.conversations.find(c => c.id === state.currentConvId);
+    conv.messages.push({ role: 'user', content: topic, timestamp: Date.now() });
+    conv.updatedAt = Date.now();
+    addMessageDOM('user', topic);
+
+    // Add assistant typing placeholder
+    const assistantEl = addMessageDOM('assistant', '', true);
+
+    // Clear input
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+
+    // Fetch
+    fetch('/api/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, mode, effort, targets }),
+    })
+    .then(resp => handleStream(resp, assistantEl, conv))
+    .catch(err => {
+        updateAssistantEl(assistantEl, '**Error:** ' + err.message);
+        conv.messages.push({ role: 'assistant', content: err.message });
+    })
+    .finally(() => {
+        state.busy = false;
+        btnSend.disabled = false;
+        chatInput.disabled = false;
+        chatInput.focus();
+        saveHistory();
+        renderHistory();
+        // Update title display
+        document.getElementById('current-chat-title').textContent = conv.title;
+    });
+}
+
+function updateAssistantEl(msgEl, text) {
     const textEl = msgEl.querySelector('.markdown-body');
     if (textEl) {
-        if (isTyping) {
-            textEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-        } else {
-            textEl.innerHTML = marked.parse(text);
+        try { textEl.innerHTML = marked.parse(text); } catch(e) { textEl.textContent = text; }
+    }
+    scrollChat();
+}
+
+async function handleStream(resp, assistantEl, conv) {
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalText = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+                const event = JSON.parse(data);
+                if (event.type === 'status') {
+                    // keep typing
+                } else if (event.type === 'result') {
+                    finalText = typeof event.output === 'string'
+                        ? event.output
+                        : JSON.stringify(event.output, null, 2);
+                    updateAssistantEl(assistantEl, finalText);
+                    if (conv) {
+                        conv.messages.push({ role: 'assistant', content: finalText });
+                        conv.updatedAt = Date.now();
+                    }
+                } else if (event.type === 'error') {
+                    finalText = '**Error:** ' + event.message;
+                    updateAssistantEl(assistantEl, finalText);
+                    if (conv) {
+                        conv.messages.push({ role: 'assistant', content: finalText });
+                    }
+                }
+            } catch (e) {}
         }
     }
-    scrollToBottom();
 }
 
-function scrollToBottom() {
-    const container = $('#research-messages');
-    container.scrollTop = container.scrollHeight;
-}
-
-// ===== NEW CONVERSATION & CLEAR ALL =====
-$('#btn-new-chat').addEventListener('click', newConversation);
-$('#btn-clear-all').addEventListener('click', clearAllHistory);
-
-// ===== REVIEW =====
+// ===== REVIEW TAB =====
 $('#review-mode').addEventListener('change', function () {
     const isManual = this.value === 'manual';
     $$('#tab-review .manual-only').forEach(el => {
@@ -392,50 +425,6 @@ $('#btn-review').addEventListener('click', async () => {
     }
 });
 
-// ===== STREAM HANDLERS =====
-async function handleStream(resp, assistantEl, conv) {
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let fullText = '';
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-                const event = JSON.parse(data);
-                if (event.type === 'status') {
-                    // typing indicator stays
-                } else if (event.type === 'result') {
-                    fullText = typeof event.output === 'string'
-                        ? event.output
-                        : JSON.stringify(event.output, null, 2);
-                    updateMessage(assistantEl, fullText, false);
-                    if (conv) {
-                        conv.messages.push({ role: 'assistant', content: fullText });
-                        conv.updatedAt = Date.now();
-                        saveConversations();
-                    }
-                } else if (event.type === 'error') {
-                    updateMessage(assistantEl, '**Error:** ' + event.message, false);
-                }
-            } catch (e) {
-                // skip
-            }
-        }
-    }
-}
-
 async function handleStreamReview(resp, outputEl, statusEl) {
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
@@ -456,10 +445,7 @@ async function handleStreamReview(resp, outputEl, statusEl) {
 
             try {
                 const event = JSON.parse(data);
-                if (event.type === 'status') {
-                    statusEl.className = 'status-badge running';
-                    statusEl.textContent = 'Running...';
-                } else if (event.type === 'result') {
+                if (event.type === 'result') {
                     const text = typeof event.output === 'string'
                         ? event.output
                         : JSON.stringify(event.output, null, 2);
@@ -471,9 +457,7 @@ async function handleStreamReview(resp, outputEl, statusEl) {
                     statusEl.className = 'status-badge error';
                     statusEl.textContent = 'Error';
                 }
-            } catch (e) {
-                // skip
-            }
+            } catch (e) {}
         }
     }
 }
@@ -482,10 +466,10 @@ async function handleStreamReview(resp, outputEl, statusEl) {
 async function loadProviders() {
     const container = $('#providers-list');
     container.innerHTML = '<p class="loading">Loading providers...</p>';
-
     try {
         const resp = await fetch('/api/providers');
         const data = await resp.json();
+        state.providers = data.providers;
 
         if (!data.providers.length) {
             container.innerHTML = '<p class="loading">No providers configured. Add API keys to .env</p>';
@@ -499,9 +483,9 @@ async function loadProviders() {
             const dotClass = !p.enabled ? 'disabled' : (p.healthy ? 'healthy' : 'unhealthy');
             const statusText = !p.enabled ? 'Disabled' : (p.healthy ? 'Healthy' : 'Unhealthy');
             card.innerHTML = `
-                <span class="provider-name">${p.name}</span>
+                <span class="provider-name">${esc(p.name)}</span>
                 <span class="provider-status"><span class="status-dot ${dotClass}"></span>${statusText}</span>
-                <span class="provider-model">${p.default_model || 'No default model'}</span>
+                <span class="provider-model">${esc(p.default_model || 'No default model')}</span>
             `;
             container.appendChild(card);
         });
@@ -514,7 +498,6 @@ async function loadProviders() {
 async function loadConfig() {
     const container = $('#config-list');
     container.innerHTML = '<p class="loading">Loading config...</p>';
-
     try {
         const resp = await fetch('/api/config');
         const data = await resp.json();
@@ -532,7 +515,7 @@ async function loadConfig() {
         rows.forEach(([key, val]) => {
             const row = document.createElement('div');
             row.className = 'config-row';
-            row.innerHTML = `<span class="config-key">${key}</span><span class="config-value">${val}</span>`;
+            row.innerHTML = `<span class="config-key">${esc(key)}</span><span class="config-value">${esc(val)}</span>`;
             container.appendChild(row);
         });
     } catch (err) {
@@ -544,7 +527,6 @@ async function loadConfig() {
 async function loadModels() {
     const container = $('#models-list');
     container.innerHTML = '<p class="loading">Loading models...</p>';
-
     try {
         const resp = await fetch('/api/models');
         const data = await resp.json();
@@ -560,13 +542,13 @@ async function loadModels() {
         Object.entries(groups).forEach(([provider, models]) => {
             const group = document.createElement('div');
             group.className = 'model-group';
-            group.innerHTML = `<div class="model-group-title">${provider}</div>`;
+            group.innerHTML = `<div class="model-group-title">${esc(provider)}</div>`;
             models.forEach(m => {
                 const item = document.createElement('div');
                 item.className = 'model-item';
                 item.innerHTML = `
-                    <span class="model-id">${m.id}</span>
-                    <span class="model-display">${m.display}</span>
+                    <span class="model-id">${esc(m.id)}</span>
+                    <span class="model-display">${esc(m.display)}</span>
                 `;
                 group.appendChild(item);
             });
@@ -577,12 +559,9 @@ async function loadModels() {
     }
 }
 
-// Configure marked
+// Configure marked on load
 if (typeof marked !== 'undefined') {
-    marked.setOptions({
-        breaks: true,
-        gfm: true,
-    });
+    marked.setOptions({ breaks: true, gfm: true });
 }
 
 // Init
