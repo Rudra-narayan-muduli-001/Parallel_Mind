@@ -13,6 +13,12 @@ class LLMResponse:
     tokens_used: Optional[int] = None
 
 
+@dataclass
+class ModelInfo:
+    id: str
+    display_name: str = ""
+
+
 class BaseProvider(ABC):
     def __init__(self, name: str, api_keys: list[str], base_url: str, default_model: str = ""):
         self.name = name
@@ -23,6 +29,11 @@ class BaseProvider(ABC):
 
     @abstractmethod
     async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse: ...
+
+    async def list_models(self) -> list[ModelInfo]:
+        """Fetch the live model list from the provider's API.
+        Returns an empty list on failure — callers should fall back to a static catalog."""
+        return []
 
     def is_healthy(self) -> bool:
         return self.breaker.allow_request() and self.key_pool.has_healthy_key()
