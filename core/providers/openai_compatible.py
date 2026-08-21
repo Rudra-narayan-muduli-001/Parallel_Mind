@@ -1,6 +1,6 @@
 import httpx
 
-from core.providers.base import BaseProvider, LLMResponse
+from core.providers.base import BaseProvider, LLMResponse, ModelInfo
 
 
 class OpenAICompatibleProvider(BaseProvider):
@@ -11,7 +11,6 @@ class OpenAICompatibleProvider(BaseProvider):
     NVIDIA NIM,
     Ollama Cloud,
     OpenCode Zen."""
-
 
     async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse:
         url = f"{self.base_url.rstrip('/')}/chat/completions"
@@ -42,3 +41,29 @@ class OpenAICompatibleProvider(BaseProvider):
 
         tokens = data.get("usage", {}).get("total_tokens")
         return LLMResponse(text=text, raw=data, tokens_used=tokens)
+
+    async def list_models(self) -> list[ModelInfo]:
+        """Hit the provider's /models endpoint (OpenAI-compatible schema).
+        Returns [] on any failure so callers can fall back to static catalog."""
+        if not self.key_pool.keys:
+            return []
+        url = f"{self.base_url.rstrip('/')}/models"
+        try:
+            api_key = await self.key_pool.get_key()
+        except Exception:
+            return []
+        headers = {"Authorization": f"Bearer {api_key}"}
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(url, headers=headers)
+                resp.raise_for_status()
+                data = resp.json()
+        except Exception:
+            return []
+        out: list[ModelInfo] = []
+        for entry in data.get("data", []) or []:
+            mid = entry.get("id")
+            if not mid:
+                continue
+            out.append(ModelInfo(id=mid, display_name=mid))
+        return out
