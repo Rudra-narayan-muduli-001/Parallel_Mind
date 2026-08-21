@@ -11,13 +11,44 @@ class RoutingPolicy(ABC):
 
 
 class RuleBasedPolicy(RoutingPolicy):
-    def __init__(self):
+    """Static 5-tier lookup, filtered to configured providers, with a runtime
+    failover list of all available (provider, default_model) pairs so a
+    broken tier candidate is immediately followed by another live model.
+    """
+
+    def __init__(self, providers: dict | None = None):
+        self._providers = providers or {}
+        # Filter routing table at startup: drop entries for unconfigured providers.
+        self._filtered_table: dict[tuple[str, str], list[tuple[str, str]]] = {}
+        for (task_type, tier), candidates in ROUTING_TABLE.items():
+            kept = [
+                (p, m) for (p, m) in candidates
+                if not self._providers or p in self._providers
+            ]
+            if kept:
+                self._filtered_table[(task_type, tier)] = kept
+
+        # Fallback pool = every configured provider's (name, default_model)
+        self._fallback_pool: list[tuple[str, str]] = [
+            (name, prov.default_model)
+            for name, prov in self._providers.items()
+            if getattr(prov, "default_model", None)
+        ]
+
         self._pools: dict[tuple[str, str], RotatingCandidatePool] = {}
 
     def _get_pool(self, key: tuple[str, str]) -> RotatingCandidatePool:
-        if key not in self._pools:
-            candidates = ROUTING_TABLE.get(key) or ROUTING_TABLE.get((key[0], DEFAULT_TIER), [])
-            self._pools[key] = RotatingCandidatePool(candidates)
+        if key in self._pools:
+            return self._pools[key]
+        candidates = self._filtered_table.get(key) or \
+            self._filtered_table.get((key[0], DEFAULT_TIER), [])
+        # Append fallback candidates (deduped, excluding tier candidates already listed).
+        seen = set(candidates)
+        for fb in self._fallback_pool:
+            if fb not in seen:
+                candidates.append(fb)
+                seen.add(fb)
+        self._pools[key] = RotatingCandidatePool(candidates)
         return self._pools[key]
 
     async def decide(self, task) -> list[tuple[str, str]]:
@@ -75,4 +106,4 @@ def build_policy(run_config, providers=None) -> RoutingPolicy:
         if router_provider:
             return LLMRouterPolicy(router_provider, settings.router_model_name, all_targets)
 
-    return RuleBasedPolicy()
+    return RuleBasedPolicy(providers=providers)
