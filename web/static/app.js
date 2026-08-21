@@ -240,19 +240,19 @@ function addMessageDOM(role, text, isTyping = false) {
     label.className = 'message-label';
     label.textContent = role === 'user' ? 'You' : 'Research Result';
 
-    const textEl = document.createElement('div');
-    textEl.className = role === 'assistant' ? 'markdown-body' : 'message-text';
+    const bodyEl = document.createElement('div');
+    bodyEl.className = role === 'assistant' ? 'markdown-body' : 'message-text';
 
     if (isTyping) {
-        textEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        bodyEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
     } else if (role === 'assistant') {
-        try { textEl.innerHTML = marked.parse(text); } catch(e) { textEl.textContent = text; }
+        try { bodyEl.innerHTML = marked.parse(text); } catch(e) { bodyEl.textContent = text; }
     } else {
-        textEl.textContent = text;
+        bodyEl.textContent = text;
     }
 
     content.appendChild(label);
-    content.appendChild(textEl);
+    content.appendChild(bodyEl);
     msg.appendChild(avatar);
     msg.appendChild(content);
     container.appendChild(msg);
@@ -263,6 +263,124 @@ function addMessageDOM(role, text, isTyping = false) {
 function scrollChat() {
     const c = document.getElementById('research-messages');
     if (c) c.scrollTop = c.scrollHeight;
+}
+
+// ===== PARALLEL EXECUTION VIZ =====
+function createParallelViz(msgEl) {
+    const content = msgEl.querySelector('.message-content');
+    const oldBody = content.querySelector('.markdown-body');
+    if (oldBody) oldBody.innerHTML = '';
+
+    const vizBox = document.createElement('div');
+    vizBox.className = 'parallel-viz';
+    vizBox.innerHTML = `
+        <div class="parallel-viz-header">
+            <div class="parallel-viz-title">
+                <div class="parallel-viz-spinner"></div>
+                <span class="viz-stage-text">Running parallel agents…</span>
+            </div>
+            <div class="parallel-viz-stats">
+                <span class="viz-stat-total">0 tasks</span>
+                <span class="stat-done viz-stat-done">0 done</span>
+                <span class="stat-fail viz-stat-fail">0 failed</span>
+            </div>
+        </div>
+        <div class="parallel-viz-tasks"></div>
+    `;
+
+    content.insertBefore(vizBox, oldBody);
+
+    const resultBody = document.createElement('div');
+    resultBody.className = 'markdown-body';
+    content.appendChild(resultBody);
+    oldBody.remove();
+
+    return {
+        box: vizBox,
+        spinner: vizBox.querySelector('.parallel-viz-spinner'),
+        stage: vizBox.querySelector('.viz-stage-text'),
+        statTotal: vizBox.querySelector('.viz-stat-total'),
+        statDone: vizBox.querySelector('.viz-stat-done'),
+        statFail: vizBox.querySelector('.viz-stat-fail'),
+        tasksEl: vizBox.querySelector('.parallel-viz-tasks'),
+        resultBody: resultBody,
+        tasks: {},
+        doneCount: 0,
+        failCount: 0,
+        totalCount: 0,
+    };
+}
+
+function vizTaskStarted(viz, task_id, prompt) {
+    viz.totalCount++;
+    const index = Object.keys(viz.tasks).length + 1;
+    const shortPrompt = prompt.length > 70 ? prompt.substring(0, 70) + '…' : prompt;
+
+    const taskEl = document.createElement('div');
+    taskEl.className = 'viz-task running';
+    taskEl.dataset.id = task_id;
+    taskEl.innerHTML = `
+        <span class="viz-task-index">${index}</span>
+        <div class="viz-task-info">
+            <div class="viz-task-prompt"></div>
+        </div>
+        <div class="viz-task-progress"><div class="viz-task-progress-bar"></div></div>
+        <span class="viz-task-badge running">running</span>
+    `;
+    taskEl.querySelector('.viz-task-prompt').textContent = shortPrompt;
+
+    viz.tasksEl.appendChild(taskEl);
+    viz.tasks[task_id] = { el: taskEl, index: index, startedAt: performance.now() };
+    updateVizStats(viz);
+    scrollChat();
+}
+
+function vizTaskDone(viz, task_id, success, provider, model, latency, error) {
+    const t = viz.tasks[task_id];
+    if (!t) return;
+    t.el.classList.remove('running');
+    const info = t.el.querySelector('.viz-task-info');
+    let metaDiv = info.querySelector('.viz-task-meta');
+    if (!metaDiv) {
+        metaDiv = document.createElement('div');
+        metaDiv.className = 'viz-task-meta';
+        info.appendChild(metaDiv);
+    }
+    const progress = t.el.querySelector('.viz-task-progress');
+    if (progress) progress.remove();
+    const badge = t.el.querySelector('.viz-task-badge');
+
+    if (success) {
+        t.el.classList.add('success');
+        t.el.querySelector('.viz-task-index').textContent = '✓';
+        badge.className = 'viz-task-badge success';
+        badge.innerHTML = `${escapeHtml(provider || '')}/${escapeHtml(model || '')} <span class="timing">${latency}s</span>`;
+    } else {
+        t.el.classList.add('fail');
+        t.el.querySelector('.viz-task-index').textContent = '✕';
+        badge.className = 'viz-task-badge fail';
+        badge.textContent = 'failed';
+        metaDiv.textContent = error || '';
+        badge.title = error || '';
+    }
+
+    if (success) viz.doneCount++; else viz.failCount++;
+    updateVizStats(viz);
+    if (viz.totalCount > 0 && viz.doneCount + viz.failCount >= viz.totalCount) {
+        viz.spinner.classList.add('done');
+        viz.stage.textContent = `Completed ${viz.doneCount} agent${viz.doneCount !== 1 ? 's' : ''} in parallel`;
+    }
+    scrollChat();
+}
+
+function updateVizStats(viz) {
+    viz.statTotal.textContent = `${viz.totalCount} task${viz.totalCount !== 1 ? 's' : ''}`;
+    viz.statDone.textContent = `${viz.doneCount} done`;
+    viz.statFail.textContent = `${viz.failCount} failed`;
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 }
 
 function startResearch() {
@@ -317,7 +435,7 @@ function startResearch() {
     })
     .then(resp => handleStream(resp, assistantEl, conv))
     .catch(err => {
-        updateAssistantEl(assistantEl, '**Error:** ' + err.message);
+        renderFinal(assistantEl, null, '**Error:** ' + err.message);
         conv.messages.push({ role: 'assistant', content: err.message });
     })
     .finally(() => {
@@ -332,19 +450,12 @@ function startResearch() {
     });
 }
 
-function updateAssistantEl(msgEl, text) {
-    const textEl = msgEl.querySelector('.markdown-body');
-    if (textEl) {
-        try { textEl.innerHTML = marked.parse(text); } catch(e) { textEl.textContent = text; }
-    }
-    scrollChat();
-}
-
 async function handleStream(resp, assistantEl, conv) {
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let finalText = '';
+    let viz = null;
 
     while (true) {
         const { done, value } = await reader.read();
@@ -362,19 +473,26 @@ async function handleStream(resp, assistantEl, conv) {
             try {
                 const event = JSON.parse(data);
                 if (event.type === 'status') {
-                    // keep typing
+                    // keep typing until tasks begin
+                } else if (event.type === 'task_start') {
+                    if (!viz) viz = createParallelViz(assistantEl);
+                    vizTaskStarted(viz, event.task_id, event.prompt);
+                } else if (event.type === 'task_success') {
+                    if (viz) vizTaskDone(viz, event.task_id, true, event.provider, event.model, event.latency_sec);
+                } else if (event.type === 'task_fail') {
+                    if (viz) vizTaskDone(viz, event.task_id, false, null, null, event.latency_sec, event.error);
                 } else if (event.type === 'result') {
                     finalText = typeof event.output === 'string'
                         ? event.output
                         : JSON.stringify(event.output, null, 2);
-                    updateAssistantEl(assistantEl, finalText);
+                    renderFinal(assistantEl, viz, finalText);
                     if (conv) {
                         conv.messages.push({ role: 'assistant', content: finalText });
                         conv.updatedAt = Date.now();
                     }
                 } else if (event.type === 'error') {
                     finalText = '**Error:** ' + event.message;
-                    updateAssistantEl(assistantEl, finalText);
+                    renderFinal(assistantEl, viz, finalText);
                     if (conv) {
                         conv.messages.push({ role: 'assistant', content: finalText });
                     }
@@ -382,6 +500,24 @@ async function handleStream(resp, assistantEl, conv) {
             } catch (e) {}
         }
     }
+}
+
+function renderFinal(assistantEl, viz, text) {
+    let target;
+    if (viz && viz.resultBody) {
+        target = viz.resultBody;
+    } else {
+        // fallback: replace typing indicator body
+        const body = assistantEl.querySelector('.markdown-body');
+        if (body) {
+            body.innerHTML = '';
+            target = body;
+        }
+    }
+    if (target) {
+        try { target.innerHTML = marked.parse(text); } catch(e) { target.textContent = text; }
+    }
+    scrollChat();
 }
 
 // ===== REVIEW TAB =====
