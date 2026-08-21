@@ -1,6 +1,6 @@
 import httpx
 
-from core.providers.base import BaseProvider, LLMResponse
+from core.providers.base import BaseProvider, LLMResponse, ModelInfo
 
 
 class AnthropicProvider(BaseProvider):
@@ -38,3 +38,29 @@ class AnthropicProvider(BaseProvider):
             tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
 
         return LLMResponse(text=text, raw=data, tokens_used=tokens)
+
+    async def list_models(self) -> list[ModelInfo]:
+        """Fetch from Anthropic's /v1/models endpoint."""
+        if not self.key_pool.keys:
+            return []
+        url = f"{self.base_url.rstrip('/')}/v1/models"
+        try:
+            api_key = await self.key_pool.get_key()
+        except Exception:
+            return []
+        headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(url, headers=headers)
+                resp.raise_for_status()
+                data = resp.json()
+        except Exception:
+            return []
+        out: list[ModelInfo] = []
+        for entry in data.get("data", []) or []:
+            mid = entry.get("id")
+            if not mid:
+                continue
+            display = entry.get("display_name") or mid
+            out.append(ModelInfo(id=mid, display_name=display))
+        return out
