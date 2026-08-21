@@ -40,3 +40,36 @@ async def test_manual_policy_rotates():
     r1 = await policy.decide(task)
     r2 = await policy.decide(task)
     assert r1 != r2
+
+
+class _FakeProvider:
+    def __init__(self, default_model: str):
+        self.default_model = default_model
+
+
+@pytest.mark.asyncio
+async def test_rule_based_policy_drops_unconfigured_providers():
+    """Providers without configured API keys must not appear in candidates."""
+    providers = {"groq": _FakeProvider("openai/gpt-oss-20b")}
+    task = AgentTask(id="t5", prompt="test", metadata={"task_type": "research", "complexity_tier": "high"})
+    policy = RuleBasedPolicy(providers=providers)
+    candidates = await policy.decide(task)
+    assert len(candidates) > 0
+    # All candidates must be from configured providers.
+    for provider_name, _ in candidates:
+        assert provider_name in providers, f"Unconfigured provider {provider_name} leaked into candidates"
+    # "anthropic"/"openai" are referenced in routing table but should be filtered out.
+    assert "anthropic" not in {p for p, _ in candidates}
+    assert "openai" not in {p for p, _ in candidates}
+
+
+@pytest.mark.asyncio
+async def test_rule_based_policy_appends_fallback_when_tier_exhausted():
+    """If tier candidates all reference unconfigured providers, fallback (every
+    configured provider's default_model) must fill the list so failover works."""
+    providers = {"groq": _FakeProvider("openai/gpt-oss-20b")}
+    # 'high' tier in routing table references nvidia_nim, openai, anthropic (none configured)
+    task = AgentTask(id="t6", prompt="test", metadata={"task_type": "research", "complexity_tier": "high"})
+    policy = RuleBasedPolicy(providers=providers)
+    candidates = await policy.decide(task)
+    assert ("groq", "openai/gpt-oss-20b") in candidates, "Configured groq model must appear as failover"
