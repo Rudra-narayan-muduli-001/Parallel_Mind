@@ -20,7 +20,7 @@ async def run_review(path: str):
         policy: RuleBasedPolicy | ManualPolicy = ManualPolicy(run_config.selected_targets, run_config.effort)
         gen_params = dict(EFFORT_PRESETS[run_config.effort])
     else:
-        policy = RuleBasedPolicy()
+        policy = RuleBasedPolicy(providers=providers)
         gen_params = {}
 
     router = Router(policy)
