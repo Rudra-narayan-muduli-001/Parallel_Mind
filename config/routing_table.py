@@ -2,10 +2,10 @@ from core.models import ComplexityTier
 
 ROUTING_TABLE = {
     ("research", "low"): [
-        ("groq", "openai/gpt-oss-120b"),
+        ("groq", "openai/gpt-oss-20b"),
     ],
     ("research", "mid"): [
-        ("groq", "openai/gpt-oss-120b"),
+        ("groq", "openai/gpt-oss-20b"),
         ("openrouter", "meta-llama/llama-3.1-70b-instruct"),
         ("nvidia_nim", "llama-3.3-nemotron-super-49b-v1.5"),
     ],
@@ -23,10 +23,10 @@ ROUTING_TABLE = {
         ("openai", "gpt-4o"),
     ],
     ("code_review", "low"): [
-        ("groq", "openai/gpt-oss-120b"),
+        ("groq", "openai/gpt-oss-20b"),
     ],
     ("code_review", "mid"): [
-        ("groq", "openai/gpt-oss-120b"),
+        ("groq", "openai/gpt-oss-20b"),
         ("nvidia_nim", "llama-3.3-nemotron-super-49b-v1.5"),
     ],
     ("code_review", "high"): [
