@@ -26,14 +26,26 @@ template_env = Environment(
     autoescape=True,
 )
 
-catalog = ModelCatalog()
 providers = build_providers(settings)
+
+
+async def _init_catalog() -> ModelCatalog:
+    """Build catalog with live model discovery from each provider's API.
+    Falls back to YAML-only if all providers fail to respond."""
+    try:
+        return await ModelCatalog.from_providers(providers)
+    except Exception:
+        return ModelCatalog()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global catalog
+    catalog = await _init_catalog()
     yield
 
+
+catalog: ModelCatalog = ModelCatalog()  # placeholder, replaced at startup
 
 app = FastAPI(title="ParallelMind", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
@@ -74,6 +86,18 @@ async def get_config():
 async def get_models():
     models = catalog.list_models()
     return {"models": [{"provider": p, "id": m, "display": d} for p, m, d in models]}
+
+
+@app.post("/api/models/refresh")
+async def refresh_models():
+    """Re-discover models from each provider's /models endpoint."""
+    global catalog
+    catalog = await _init_catalog()
+    models = catalog.list_models()
+    return {
+        "models": [{"provider": p, "id": m, "display": d} for p, m, d in models],
+        "refreshed_at": time.time(),
+    }
 
 
 @app.get("/api/effort-presets")
