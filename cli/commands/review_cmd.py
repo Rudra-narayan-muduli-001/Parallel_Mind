@@ -12,6 +12,7 @@ from pipelines.code_review.pipeline import CodeReviewPipeline
 
 
 async def run_review(path: str):
+    providers = build_providers(settings)
     catalog = await ModelCatalog.from_providers(providers)
     run_config = run_wizard(catalog)
     providers = build_providers(settings)
@@ -20,7 +21,7 @@ async def run_review(path: str):
         policy: RuleBasedPolicy | ManualPolicy = ManualPolicy(run_config.selected_targets, run_config.effort)
         gen_params = dict(EFFORT_PRESETS[run_config.effort])
     else:
-        policy = RuleBasedPolicy(providers=providers)
+        policy = RuleBasedPolicy(providers=providers, catalog=catalog)
         gen_params = {}
 
     router = Router(policy)
