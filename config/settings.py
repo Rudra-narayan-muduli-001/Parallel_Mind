@@ -28,10 +28,11 @@ class Settings(BaseSettings):
     opencode_zen_base_url: str = "https://opencode.ai/zen/v1"
     opencode_zen_default_model: str = ""
 
-    default_max_concurrency: int = 5
+    default_max_concurrency: int = 3
     default_timeout_sec: int = 60
     circuit_breaker_fail_threshold: int = 5
     circuit_breaker_reset_sec: int = 60
+    rate_limit_cooldown_sec: float = 30.0
 
     routing_mode: str = "rule_based"
     router_model_provider: str = "groq"
