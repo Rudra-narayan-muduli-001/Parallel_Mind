@@ -667,33 +667,61 @@ async function loadModels() {
         const resp = await fetch('/api/models');
         const data = await resp.json();
         state.models = data.models;
-
-        const groups = {};
-        data.models.forEach(m => {
-            if (!groups[m.provider]) groups[m.provider] = [];
-            groups[m.provider].push(m);
-        });
-
-        container.innerHTML = '';
-        Object.entries(groups).forEach(([provider, models]) => {
-            const group = document.createElement('div');
-            group.className = 'model-group';
-            group.innerHTML = `<div class="model-group-title">${esc(provider)}</div>`;
-            models.forEach(m => {
-                const item = document.createElement('div');
-                item.className = 'model-item';
-                item.innerHTML = `
-                    <span class="model-id">${esc(m.id)}</span>
-                    <span class="model-display">${esc(m.display)}</span>
-                `;
-                group.appendChild(item);
-            });
-            container.appendChild(group);
-        });
+        renderModels(container, data.models);
     } catch (err) {
         container.innerHTML = `<p class="loading">Error: ${err.message}</p>`;
     }
 }
+
+function renderModels(container, models) {
+    if (!models.length) {
+        container.innerHTML = '<p class="loading">No models found</p>';
+        return;
+    }
+    const groups = {};
+    models.forEach(m => {
+        if (!groups[m.provider]) groups[m.provider] = [];
+        groups[m.provider].push(m);
+    });
+    container.innerHTML = '';
+    Object.entries(groups).forEach(([provider, items]) => {
+        const group = document.createElement('div');
+        group.className = 'model-group';
+        group.innerHTML = `<div class="model-group-title">${esc(provider)} <span class="model-count">(${items.length})</span></div>`;
+        items.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'model-item';
+            item.innerHTML = `
+                <span class="model-id">${esc(m.id)}</span>
+                <span class="model-display">${esc(m.display)}</span>
+            `;
+            group.appendChild(item);
+        });
+        container.appendChild(group);
+    });
+}
+
+async function refreshModels() {
+    const btn = $('#btn-refresh-models');
+    if (!btn) return;
+    btn.classList.add('spinning');
+    btn.disabled = true;
+    try {
+        const resp = await fetch('/api/models/refresh', { method: 'POST' });
+        const data = await resp.json();
+        state.models = data.models;
+        const container = $('#models-list');
+        renderModels(container, data.models);
+    } catch (err) {
+        alert('Refresh failed: ' + err.message);
+    } finally {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    }
+}
+
+const refreshBtn = $('#btn-refresh-models');
+if (refreshBtn) refreshBtn.addEventListener('click', refreshModels);
 
 // Configure marked on load
 if (typeof marked !== 'undefined') {
