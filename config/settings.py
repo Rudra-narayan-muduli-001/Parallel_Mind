@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     router_model_provider: str = "groq"
     router_model_name: str = "llama-3.1-8b-instant"
 
+    # Default to a single provider + only free models so users without paid
+    # API keys still get working parallel agents out of the box.
+    default_provider: str = "opencode_zen"
+    free_models_only: bool = True
+
     log_level: str = "INFO"
     log_format: str = "json"
 
