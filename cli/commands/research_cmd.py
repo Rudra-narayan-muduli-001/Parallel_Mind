@@ -12,7 +12,7 @@ from pipelines.research.pipeline import ResearchPipeline
 
 
 async def run_research(topic: str):
-    catalog = ModelCatalog()
+    catalog = await ModelCatalog.from_providers(providers)
     run_config = run_wizard(catalog)
     providers = build_providers(settings)
 
