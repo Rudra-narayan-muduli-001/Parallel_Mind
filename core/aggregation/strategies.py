@@ -76,6 +76,12 @@ class DedupeMergeAggregator(AggregationStrategy):
 
 
 class LLMSynthesisAggregator(AggregationStrategy):
+    # Per-finding char budget — keeps the synthesis prompt bounded so we don't
+    # exceed provider context windows (Groq returned 413 on large research runs).
+    MAX_FINDING_CHARS = 1500
+    # Max total findings chars (≈ tokens × 4 for English).
+    MAX_TOTAL_FINDING_CHARS = 6000
+
     def __init__(self, provider, model: str, synthesis_prompt_template: str | None = None):
         self.provider = provider
         self.model = model
@@ -86,13 +92,32 @@ class LLMSynthesisAggregator(AggregationStrategy):
             "Provide a consolidated, well-structured response."
         )
 
+    @classmethod
+    def _truncate(cls, text: str, budget: int) -> str:
+        if len(text) <= budget:
+            return text
+        return text[:budget].rsplit(" ", 1)[0] + "…"
+
     async def aggregate(self, task: AgentTask, results: list[AgentResult]) -> AgentResult:
         successful = [r for r in results if r.success and r.output]
         if not successful:
             return AgentResult(task_id=task.id, success=False, error="No successful results to synthesize")
 
+        # Bound each finding, then bound the total so the synthesis prompt
+        # always fits within reasonable provider context windows.
+        per_finding = max(200, cls.MAX_TOTAL_FINDING_CHARS // max(1, len(successful)))
+        per_finding = min(per_finding, cls.MAX_FINDING_CHARS)
+
+        bounded = [cls._truncate(str(r.output), per_finding) for r in successful]
+        # Final trim in case total still exceeds budget after equal slicing.
+        total = sum(len(b) for b in bounded)
+        if total > cls.MAX_TOTAL_FINDING_CHARS:
+            ratio = cls.MAX_TOTAL_FINDING_CHARS / total
+            bounded = [cls._truncate(b, max(150, int(len(b) * ratio))) for b in bounded]
+
         findings_text = "\n\n".join(
-            f"--- Finding from {r.provider_used or 'unknown'} ---\n{r.output}" for r in successful
+            f"--- Finding from {r.provider_used or 'unknown'} ---\n{t}"
+            for r, t in zip(successful, bounded)
         )
         prompt = self.template.format(task_prompt=task.prompt, findings=findings_text)
 
