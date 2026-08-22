@@ -12,7 +12,7 @@ from pipelines.code_review.pipeline import CodeReviewPipeline
 
 
 async def run_review(path: str):
-    catalog = ModelCatalog()
+    catalog = await ModelCatalog.from_providers(providers)
     run_config = run_wizard(catalog)
     providers = build_providers(settings)
 
