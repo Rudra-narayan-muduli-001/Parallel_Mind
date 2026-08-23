@@ -640,6 +640,8 @@ async function loadConfig() {
 
         const rows = [
             ['Routing Mode', data.routing_mode],
+            ['Default Provider', data.default_provider],
+            ['Free Models Only', data.free_models_only ? 'Yes' : 'No'],
             ['Max Concurrency', data.max_concurrency],
             ['Timeout (sec)', data.timeout_sec],
             ['CB Fail Threshold', data.circuit_breaker_fail_threshold],
