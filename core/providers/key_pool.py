@@ -23,20 +23,31 @@ class APIKeyPool:
             raise NoAvailableKeyError("No API keys configured for this provider")
         async with self._lock:
             n = len(self.keys)
+            now = time.time()
             for _ in range(n):
                 key = self.keys[self._index]
                 self._index = (self._index + 1) % n
                 s = self.status[key]
-                if s["healthy"] and time.time() > s["cooldown_until"]:
+                # Auto-recover keys whose cooldown has expired — even if they
+                # were marked unhealthy by previous failure bursts, give them
+                # another chance after the cooldown window passes.
+                if now > s["cooldown_until"]:
+                    if not s["healthy"]:
+                        s["healthy"] = True
+                        s["failures"] = 0
                     return key
             raise NoAvailableKeyError("All API keys exhausted/unhealthy for this provider")
 
-    def report_failure(self, key: str, cooldown_sec: float = 30.0, fail_threshold: int = 5):
+    def report_failure(self, key: str, cooldown_sec: float = 30.0, fail_threshold: int = 20):
         s = self.status.get(key)
         if s is None:
             return
         s["failures"] += 1
         s["cooldown_until"] = time.time() + cooldown_sec
+        # Use a high threshold — only kill the key after MANY consecutive failures.
+        # The key itself is rarely the problem (rate-limit / model errors are
+        # provider-side, not key-side). Auto-recovery happens via get_key() once
+        # cooldown expires.
         if s["failures"] >= fail_threshold:
             s["healthy"] = False
 
