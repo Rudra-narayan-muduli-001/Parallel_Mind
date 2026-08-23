@@ -79,6 +79,8 @@ async def get_config():
         "circuit_breaker_fail_threshold": settings.circuit_breaker_fail_threshold,
         "circuit_breaker_reset_sec": settings.circuit_breaker_reset_sec,
         "providers": list(providers.keys()),
+        "default_provider": settings.default_provider,
+        "free_models_only": settings.free_models_only,
     }
 
 
@@ -110,8 +112,14 @@ def _build_pipeline(mode: str, effort: str = "low", selected_targets: list[tuple
         policy = ManualPolicy(selected_targets, effort)
         gen_params = dict(EFFORT_PRESETS.get(effort, EFFORT_PRESETS["low"]))
     else:
-        policy = RuleBasedPolicy(providers=providers)
+        # Pass the live catalog so the policy can build a free-models-only
+        # fallback list from real provider responses (not stale YAML).
+        policy = RuleBasedPolicy(providers=providers, catalog=catalog)
         gen_params = {}
+
+    # Always include the rate-limit cooldown so the executor knows how long
+    # to skip a provider after a 429.
+    gen_params.setdefault("rate_limit_cooldown_sec", settings.rate_limit_cooldown_sec)
 
     router = Router(policy)
     executor = AgentExecutor(providers, default_timeout=settings.default_timeout_sec)
