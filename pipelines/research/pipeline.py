@@ -11,8 +11,6 @@ class ResearchPipeline:
         self.orchestrator = orchestrator
         self.providers = providers
         self.gen_params = gen_params or {}
-        # Planner rotates through all configured providers' default_models so
-        # a 429 on one provider's model fails over to the next.
         self.planner = ResearchPlanner(providers)
         self.researcher = ResearcherAgent()
         self.aggregator = build_research_aggregator(providers)
