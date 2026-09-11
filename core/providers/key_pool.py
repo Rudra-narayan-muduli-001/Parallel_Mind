@@ -7,9 +7,6 @@ class NoAvailableKeyError(Exception):
 
 
 class APIKeyPool:
-    """Round-robins across all configured API keys for a single provider.
-    Tracks per-key health (failure count + cooldown) so failing keys are
-    automatically skipped without manual intervention."""
 
 
     def __init__(self, keys: list[str]):
@@ -28,9 +25,6 @@ class APIKeyPool:
                 key = self.keys[self._index]
                 self._index = (self._index + 1) % n
                 s = self.status[key]
-                # Auto-recover keys whose cooldown has expired — even if they
-                # were marked unhealthy by previous failure bursts, give them
-                # another chance after the cooldown window passes.
                 if now > s["cooldown_until"]:
                     if not s["healthy"]:
                         s["healthy"] = True
@@ -44,10 +38,6 @@ class APIKeyPool:
             return
         s["failures"] += 1
         s["cooldown_until"] = time.time() + cooldown_sec
-        # Use a high threshold — only kill the key after MANY consecutive failures.
-        # The key itself is rarely the problem (rate-limit / model errors are
-        # provider-side, not key-side). Auto-recovery happens via get_key() once
-        # cooldown expires.
         if s["failures"] >= fail_threshold:
             s["healthy"] = False
 
