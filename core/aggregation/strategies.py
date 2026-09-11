@@ -76,10 +76,7 @@ class DedupeMergeAggregator(AggregationStrategy):
 
 
 class LLMSynthesisAggregator(AggregationStrategy):
-    # Per-finding char budget — keeps the synthesis prompt bounded so we don't
-    # exceed provider context windows (Groq returned 413 on large research runs).
     MAX_FINDING_CHARS = 1500
-    # Max total findings chars (≈ tokens × 4 for English).
     MAX_TOTAL_FINDING_CHARS = 6000
 
     def __init__(self, providers: dict, default_model: str | None = None,
@@ -104,13 +101,10 @@ class LLMSynthesisAggregator(AggregationStrategy):
         if not successful:
             return AgentResult(task_id=task.id, success=False, error="No successful results to synthesize")
 
-        # Bound each finding, then bound the total so the synthesis prompt
-        # always fits within reasonable provider context windows.
         per_finding = max(200, self.MAX_TOTAL_FINDING_CHARS // max(1, len(successful)))
         per_finding = min(per_finding, self.MAX_FINDING_CHARS)
 
         bounded = [self._truncate(str(r.output), per_finding) for r in successful]
-        # Final trim in case total still exceeds budget after equal slicing.
         total = sum(len(b) for b in bounded)
         if total > self.MAX_TOTAL_FINDING_CHARS:
             ratio = self.MAX_TOTAL_FINDING_CHARS / total
@@ -123,8 +117,6 @@ class LLMSynthesisAggregator(AggregationStrategy):
         prompt = self.template.format(task_prompt=task.prompt, findings=findings_text)
 
         import time as _time
-        # Try every configured provider's default model — failover on 429 so
-        # the synthesis never crashes the whole run.
         for name, provider in self.providers.items():
             if _time.time() < getattr(provider, "rate_limited_until", 0):
                 continue
@@ -147,8 +139,6 @@ class LLMSynthesisAggregator(AggregationStrategy):
                     provider.mark_rate_limited(cooldown_sec=30.0)
                 continue
 
-        # All providers failed — return the bounded findings as a plain concatenation.
-        # Better to give the user the raw findings than nothing at all.
         return AgentResult(
             task_id=task.id,
             success=True,
