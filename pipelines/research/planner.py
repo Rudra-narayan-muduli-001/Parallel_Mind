@@ -9,11 +9,6 @@ logger = logging.getLogger("parallelmind.planner")
 
 
 class ResearchPlanner:
-    """Decomposes a research topic into 3-5 sub-questions.
-
-    Failover-aware: tries each candidate (provider, model) in order, marks the
-    provider rate-limited on 429, and falls back to a local heuristic if every
-    provider is unavailable — so a transient 429 never aborts the whole run."""
 
     LOCAL_FALLBACK_PROMPT = (
         "Decompose the following research topic into 3-5 sub-questions.\n"
@@ -29,8 +24,6 @@ class ResearchPlanner:
                  candidates: list[tuple[str, str]] | None = None):
         self.providers = providers
         self._candidates_override = candidates
-        # Build a rotating candidate list: prefer the planner's default model
-        # first, then every other free-model candidate so a 429 fails over fast.
         if candidates:
             self._pool = RotatingCandidatePool(candidates)
         else:
@@ -69,10 +62,8 @@ class ResearchPlanner:
                 logger.warning(f"Planner {provider_name}/{model} failed: {err_text[:120]}")
                 if "429" in err_text or "Too Many Requests" in err_text or "rate limit" in err_text.lower():
                     provider.mark_rate_limited(cooldown_sec=30.0)
-                # try next candidate
                 continue
 
-        # All providers failed — synthesize a small plan locally so the run still proceeds.
         logger.warning(f"Planner exhausted all candidates ({last_error}); using local fallback")
         return self._local_fallback(topic)
 
@@ -87,7 +78,7 @@ class ResearchPlanner:
             tier_str = tier_str.strip().lower()
             tier: ComplexityTier = DEFAULT_TIER
             if tier_str in {"low", "mid", "high", "xhigh", "max"}:
-                tier = tier_str  # type: ignore[assignment]
+                tier = tier_str
             tasks.append(
                 AgentTask(
                     id=f"research-{len(tasks)}",
@@ -101,8 +92,6 @@ class ResearchPlanner:
 
     @staticmethod
     def _local_fallback(topic: str) -> list[AgentTask]:
-        """Local heuristic: produce 3 simple sub-questions so research still works
-        even when every provider is rate-limited."""
         return [
             AgentTask(
                 id="research-0",
