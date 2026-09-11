@@ -40,7 +40,6 @@ class AnthropicProvider(BaseProvider):
         return LLMResponse(text=text, raw=data, tokens_used=tokens)
 
     async def list_models(self) -> list[ModelInfo]:
-        """Fetch from Anthropic's /v1/models endpoint."""
         if not self.key_pool.keys:
             return []
         url = f"{self.base_url.rstrip('/')}/v1/models"

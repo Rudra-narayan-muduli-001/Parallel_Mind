@@ -4,13 +4,6 @@ from core.providers.base import BaseProvider, LLMResponse, ModelInfo
 
 
 class OpenAICompatibleProvider(BaseProvider):
-    """Covers any provider exposing an OpenAI-style /chat/completions endpoint:
-    OpenAI,
-    Groq,
-    OpenRouter,
-    NVIDIA NIM,
-    Ollama Cloud,
-    OpenCode Zen."""
 
     async def call(self, model: str, prompt: str, api_key: str, **gen_params) -> LLMResponse:
         url = f"{self.base_url.rstrip('/')}/chat/completions"
@@ -43,8 +36,6 @@ class OpenAICompatibleProvider(BaseProvider):
         return LLMResponse(text=text, raw=data, tokens_used=tokens)
 
     async def list_models(self) -> list[ModelInfo]:
-        """Hit the provider's /models endpoint (OpenAI-compatible schema).
-        Returns [] on any failure so callers can fall back to static catalog."""
         if not self.key_pool.keys:
             return []
         url = f"{self.base_url.rstrip('/')}/models"
