@@ -16,10 +16,8 @@ class AgentExecutor:
 
     @staticmethod
     def _is_rate_limit_error(exc: Exception) -> bool:
-        # httpx.HTTPStatusError from raise_for_status()
         if isinstance(exc, httpx.HTTPStatusError):
             return exc.response.status_code == 429
-        # Catch generic Exception text (some providers wrap the status in the message)
         msg = str(exc)
         return "429" in msg or "Too Many Requests" in msg or "rate limit" in msg.lower()
 
@@ -39,7 +37,6 @@ class AgentExecutor:
                 logger.debug(last_error)
                 continue
 
-            # Skip providers currently in rate-limit cooldown.
             if time.time() < getattr(provider, "rate_limited_until", 0):
                 logger.debug(f"Task {task.id}: {provider_name} in rate-limit cooldown, skipping")
                 continue
@@ -75,14 +72,10 @@ class AgentExecutor:
             except Exception as e:
                 provider.breaker.record_failure()
                 rate_limited = self._is_rate_limit_error(e)
-                # On 429 the key itself is fine — only the provider/model is throttled.
-                # Mark the provider as rate-limited but don't penalize the key.
                 if not rate_limited:
                     provider.key_pool.report_failure(api_key)
                 last_error = f"{provider_name}/{model} failed: {e}"
                 logger.warning(f"Task {task.id}: {last_error} — trying next candidate")
-                # Trigger a cooldown when the provider rate-limits us, so all
-                # in-flight tasks skip this provider instead of hammering it.
                 if rate_limited:
                     cooldown = gen_params.get("rate_limit_cooldown_sec", 30.0)
                     provider.mark_rate_limited(cooldown_sec=cooldown)
