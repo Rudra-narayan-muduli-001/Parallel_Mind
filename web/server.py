@@ -30,8 +30,6 @@ providers = build_providers(settings)
 
 
 async def _init_catalog() -> ModelCatalog:
-    """Build catalog with live model discovery from each provider's API.
-    Falls back to YAML-only if all providers fail to respond."""
     try:
         return await ModelCatalog.from_providers(providers)
     except Exception:
@@ -45,7 +43,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-catalog: ModelCatalog = ModelCatalog()  # placeholder, replaced at startup
+catalog: ModelCatalog = ModelCatalog()
 
 app = FastAPI(title="ParallelMind", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
@@ -92,7 +90,6 @@ async def get_models():
 
 @app.post("/api/models/refresh")
 async def refresh_models():
-    """Re-discover models from each provider's /models endpoint."""
     global catalog
     catalog = await _init_catalog()
     models = catalog.list_models()
@@ -112,13 +109,9 @@ def _build_pipeline(mode: str, effort: str = "low", selected_targets: list[tuple
         policy = ManualPolicy(selected_targets, effort)
         gen_params = dict(EFFORT_PRESETS.get(effort, EFFORT_PRESETS["low"]))
     else:
-        # Pass the live catalog so the policy can build a free-models-only
-        # fallback list from real provider responses (not stale YAML).
         policy = RuleBasedPolicy(providers=providers, catalog=catalog)
         gen_params = {}
 
-    # Always include the rate-limit cooldown so the executor knows how long
-    # to skip a provider after a 429.
     gen_params.setdefault("rate_limit_cooldown_sec", settings.rate_limit_cooldown_sec)
 
     router = Router(policy)
@@ -128,9 +121,6 @@ def _build_pipeline(mode: str, effort: str = "low", selected_targets: list[tuple
 
 
 def _instrument_orchestrator(orchestrator: Orchestrator, queue: asyncio.Queue):
-    """Wrap _run_one so each parallel task emits start/success/fail events to the queue.
-
-    Does not modify core code — patches the instance method at runtime."""
     original_run_one = orchestrator._run_one
 
     async def traced_run_one(agent, task, gen_params):
