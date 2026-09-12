@@ -1,4 +1,3 @@
-"""Quick launcher for the ParallelMind web UI."""
 import uvicorn
 
 if __name__ == "__main__":
