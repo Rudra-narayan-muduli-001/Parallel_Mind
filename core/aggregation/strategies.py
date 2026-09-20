@@ -1,58 +1,7 @@
-from core.aggregation.base import AggregationStrategy
 from core.models import AgentResult, AgentTask
 
 
-class ConcatAggregator(AggregationStrategy):
-    async def aggregate(self, task: AgentTask, results: list[AgentResult]) -> AgentResult:
-        outputs = [r.output for r in results if r.success and r.output]
-        combined = "\n\n---\n\n".join(str(o) for o in outputs)
-        return AgentResult(
-            task_id=task.id,
-            success=len(outputs) > 0,
-            output=combined or None,
-            error=None if outputs else "No successful results to concatenate",
-            latency_sec=sum(r.latency_sec for r in results),
-            tokens_used=sum(r.tokens_used or 0 for r in results),
-        )
-
-
-class FirstSuccessAggregator(AggregationStrategy):
-    async def aggregate(self, task: AgentTask, results: list[AgentResult]) -> AgentResult:
-        for r in results:
-            if r.success:
-                return r
-        return AgentResult(
-            task_id=task.id,
-            success=False,
-            error="No successful result among candidates",
-            latency_sec=sum(r.latency_sec for r in results),
-        )
-
-
-class VotingAggregator(AggregationStrategy):
-    async def aggregate(self, task: AgentTask, results: list[AgentResult]) -> AgentResult:
-        successful = [r for r in results if r.success and r.output]
-        if not successful:
-            return AgentResult(task_id=task.id, success=False, error="No successful results to vote on")
-
-        from collections import Counter
-
-        counts: Counter[str] = Counter()
-        for r in successful:
-            key = str(r.output).strip()
-            counts[key] += 1
-
-        best = counts.most_common(1)[0]
-        return AgentResult(
-            task_id=task.id,
-            success=True,
-            output=best[0],
-            latency_sec=sum(r.latency_sec for r in successful),
-            tokens_used=sum(r.tokens_used or 0 for r in successful),
-        )
-
-
-class DedupeMergeAggregator(AggregationStrategy):
+class DedupeMergeAggregator:
     async def aggregate(self, task: AgentTask, results: list[AgentResult]) -> AgentResult:
         seen = set()
         parts = []
@@ -75,7 +24,7 @@ class DedupeMergeAggregator(AggregationStrategy):
         )
 
 
-class LLMSynthesisAggregator(AggregationStrategy):
+class LLMSynthesisAggregator:
     MAX_FINDING_CHARS = 1500
     MAX_TOTAL_FINDING_CHARS = 6000
 
