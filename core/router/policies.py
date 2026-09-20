@@ -1,14 +1,72 @@
 import json
 from abc import ABC, abstractmethod
 
-from config.routing_table import DEFAULT_TIER, ROUTING_TABLE
 from config.settings import settings
-from core.router.candidate_rotation import RotatingCandidatePool
+
+
+DEFAULT_TIER = "mid"
+
+ROUTING_TABLE = {
+    ("research", "low"): [
+        ("groq", "openai/gpt-oss-20b"),
+    ],
+    ("research", "mid"): [
+        ("groq", "openai/gpt-oss-20b"),
+        ("openrouter", "meta-llama/llama-3.1-70b-instruct"),
+        ("nvidia_nim", "llama-3.3-nemotron-super-49b-v1.5"),
+    ],
+    ("research", "high"): [
+        ("nvidia_nim", "nemotron-3-super-120b-a12b"),
+        ("openai", "gpt-4o-mini"),
+        ("anthropic", "claude-3-5-haiku-20241022"),
+    ],
+    ("research", "xhigh"): [
+        ("anthropic", "claude-3-5-sonnet-20241022"),
+        ("openai", "gpt-4o"),
+    ],
+    ("research", "max"): [
+        ("anthropic", "claude-3-5-sonnet-20241022"),
+        ("openai", "gpt-4o"),
+    ],
+    ("code_review", "low"): [
+        ("groq", "openai/gpt-oss-20b"),
+    ],
+    ("code_review", "mid"): [
+        ("groq", "openai/gpt-oss-20b"),
+        ("nvidia_nim", "llama-3.3-nemotron-super-49b-v1.5"),
+    ],
+    ("code_review", "high"): [
+        ("nvidia_nim", "nemotron-3-super-120b-a12b"),
+        ("openai", "gpt-4o-mini"),
+        ("openrouter", "meta-llama/llama-3.1-70b-instruct"),
+    ],
+    ("code_review", "xhigh"): [
+        ("anthropic", "claude-3-5-sonnet-20241022"),
+        ("openai", "gpt-4o"),
+    ],
+    ("code_review", "max"): [
+        ("anthropic", "claude-3-5-sonnet-20241022"),
+        ("openai", "gpt-4o"),
+    ],
+}
 
 
 class RoutingPolicy(ABC):
     @abstractmethod
     async def decide(self, task) -> list[tuple[str, str]]: ...
+
+
+class _RotatingPool:
+    def __init__(self, candidates: list[tuple[str, str]]):
+        self._candidates = candidates
+        self._counter = 0
+
+    def next_ordering(self) -> list[tuple[str, str]]:
+        if not self._candidates:
+            return []
+        start = self._counter % len(self._candidates)
+        self._counter += 1
+        return self._candidates[start:] + self._candidates[:start]
 
 
 class RuleBasedPolicy(RoutingPolicy):
@@ -38,21 +96,20 @@ class RuleBasedPolicy(RoutingPolicy):
         if self._default_provider and self._catalog:
             self._free_fallback = self._collect_free_models(self._default_provider)
 
-        self._pools: dict[tuple[str, str], RotatingCandidatePool] = {}
+        self._pools: dict[tuple[str, str], _RotatingPool] = {}
 
     def _collect_free_models(self, provider_name: str) -> list[tuple[str, str]]:
-        from core.providers.base import ModelInfo
         out: list[tuple[str, str]] = []
         entry = self._catalog.providers.get(provider_name) if self._catalog else None
         if not entry:
             return out
-        for m in entry.models:
-            mid = m.id.lower()
+        for m in entry.get("models", []):
+            mid = m["id"].lower()
             if mid.endswith("-free") or mid.endswith(":free") or "free" in mid.split("/")[-1]:
-                out.append((provider_name, m.id))
+                out.append((provider_name, m["id"]))
         return out
 
-    def _get_pool(self, key: tuple[str, str]) -> RotatingCandidatePool:
+    def _get_pool(self, key: tuple[str, str]) -> _RotatingPool:
         if key in self._pools:
             return self._pools[key]
 
@@ -72,23 +129,23 @@ class RuleBasedPolicy(RoutingPolicy):
                 if free_cands:
                     candidates = free_cands
 
-        self._pools[key] = RotatingCandidatePool(candidates)
+        self._pools[key] = _RotatingPool(candidates)
         return self._pools[key]
 
     async def decide(self, task) -> list[tuple[str, str]]:
         task_type = task.metadata.get("task_type", "research")
         tier = task.metadata.get("complexity_tier", DEFAULT_TIER)
         pool = self._get_pool((task_type, tier))
-        return await pool.next_ordering()
+        return pool.next_ordering()
 
 
 class ManualPolicy(RoutingPolicy):
     def __init__(self, selected_targets: list[tuple[str, str]], effort: str = "low"):
         self.effort = effort
-        self._pool = RotatingCandidatePool(selected_targets)
+        self._pool = _RotatingPool(selected_targets)
 
     async def decide(self, task) -> list[tuple[str, str]]:
-        return await self._pool.next_ordering()
+        return self._pool.next_ordering()
 
 
 class LLMRouterPolicy(RoutingPolicy):
