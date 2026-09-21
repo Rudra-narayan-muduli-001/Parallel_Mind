@@ -1,16 +1,28 @@
-import asyncio
 import logging
 
-from config.routing_table import DEFAULT_TIER
-from core.models import AgentResult, AgentTask, ComplexityTier
-from core.router.candidate_rotation import RotatingCandidatePool
+from core.models import AgentTask, ComplexityTier
 
 logger = logging.getLogger("parallelmind.planner")
+
+DEFAULT_TIER: ComplexityTier = "mid"
+
+
+class _RotatingPool:
+    def __init__(self, candidates: list[tuple[str, str]]):
+        self._candidates = candidates
+        self._counter = 0
+
+    def next_ordering(self) -> list[tuple[str, str]]:
+        if not self._candidates:
+            return []
+        start = self._counter % len(self._candidates)
+        self._counter += 1
+        return self._candidates[start:] + self._candidates[:start]
 
 
 class ResearchPlanner:
 
-    LOCAL_FALLBACK_PROMPT = (
+    PLANNER_PROMPT = (
         "Decompose the following research topic into 3-5 sub-questions.\n"
         "For each sub-question, assign a complexity tier from: low, mid, high, xhigh, max.\n"
         "Format each line as: TIER|sub-question text\n\n"
@@ -25,7 +37,7 @@ class ResearchPlanner:
         self.providers = providers
         self._candidates_override = candidates
         if candidates:
-            self._pool = RotatingCandidatePool(candidates)
+            self._pool = _RotatingPool(candidates)
         else:
             cands: list[tuple[str, str]] = []
             seen: set[tuple[str, str]] = set()
@@ -35,11 +47,11 @@ class ResearchPlanner:
                     if pair not in seen:
                         cands.append(pair)
                         seen.add(pair)
-            self._pool = RotatingCandidatePool(cands)
+            self._pool = _RotatingPool(cands)
 
     async def plan(self, topic: str) -> list[AgentTask]:
-        candidates = await self._pool.next_ordering()
-        prompt = self.LOCAL_FALLBACK_PROMPT.format(topic=topic)
+        candidates = self._pool.next_ordering()
+        prompt = self.PLANNER_PROMPT.format(topic=topic)
 
         last_error = "no candidates"
         for provider_name, model in candidates:
@@ -64,8 +76,7 @@ class ResearchPlanner:
                     provider.mark_rate_limited(cooldown_sec=30.0)
                 continue
 
-        logger.warning(f"Planner exhausted all candidates ({last_error}); using local fallback")
-        return self._local_fallback(topic)
+        raise RuntimeError(f"Planner exhausted all candidates: {last_error}")
 
     @staticmethod
     def _parse(text: str, topic: str) -> list[AgentTask]:
@@ -87,25 +98,5 @@ class ResearchPlanner:
                 )
             )
         if not tasks:
-            return ResearchPlanner._local_fallback(topic)
+            raise ValueError("Planner returned no valid tasks")
         return tasks
-
-    @staticmethod
-    def _local_fallback(topic: str) -> list[AgentTask]:
-        return [
-            AgentTask(
-                id="research-0",
-                prompt=f"Define and explain: {topic}",
-                metadata={"task_type": "research", "complexity_tier": "low"},
-            ),
-            AgentTask(
-                id="research-1",
-                prompt=f"What are the main components or aspects of: {topic}",
-                metadata={"task_type": "research", "complexity_tier": "mid"},
-            ),
-            AgentTask(
-                id="research-2",
-                prompt=f"What are practical implications or applications of: {topic}",
-                metadata={"task_type": "research", "complexity_tier": "mid"},
-            ),
-        ]
