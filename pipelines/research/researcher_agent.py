@@ -1,8 +1,7 @@
-from core.agent_base import BaseAgent
 from core.models import AgentTask
 
 
-class ResearcherAgent(BaseAgent):
+class ResearcherAgent:
     async def execute(self, task: AgentTask, provider, model: str, api_key: str, gen_params: dict) -> dict:
         prompt = f"""You are a research assistant. Answer the following question thoroughly and cite your reasoning.
 
