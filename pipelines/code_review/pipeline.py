@@ -1,17 +1,17 @@
 from core.models import AgentResult, AgentTask
-from core.orchestrator import Orchestrator
-from pipelines.code_review.aggregator import build_code_review_aggregator
+from core.pipeline import build_orchestrator
+from core.aggregation.strategies import DedupeMergeAggregator
 from pipelines.code_review.reviewer_agent import CodeReviewerAgent
 from pipelines.code_review.splitter import CodeReviewSplitter
 
 
 class CodeReviewPipeline:
-    def __init__(self, orchestrator: Orchestrator, providers: dict, gen_params: dict | None = None):
-        self.orchestrator = orchestrator
+    def __init__(self, executor, policy, providers: dict, gen_params: dict | None = None, max_concurrency: int = 5):
+        self.orchestrator = build_orchestrator(executor, policy, max_concurrency)
         self.providers = providers
         self.gen_params = gen_params or {}
         self.reviewer = CodeReviewerAgent()
-        self.aggregator = build_code_review_aggregator()
+        self.aggregator = DedupeMergeAggregator()
 
     async def run(self, path: str) -> AgentResult:
         splitter = CodeReviewSplitter(path)
