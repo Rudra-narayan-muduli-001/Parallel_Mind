@@ -3,14 +3,24 @@ import asyncio
 import typer
 from rich.console import Console
 
-from config.routing_table import ROUTING_TABLE
 from config.settings import settings
 from core.providers.model_catalog import ModelCatalog
+from core.providers.registry import build_providers
+from core.router.policies import ROUTING_TABLE
 from utils.logger import setup_logging
-from utils.validation import validate_routing_table_against_catalog
 
 console = Console()
 app = typer.Typer(name="parallelmind")
+
+
+def validate_routing_table(catalog: ModelCatalog):
+    errors = []
+    for (task_type, tier), candidates in ROUTING_TABLE.items():
+        for provider_name, model_id in candidates:
+            if not catalog.is_valid_model(provider_name, model_id):
+                errors.append(f"Routing table references unknown model '{model_id}' for provider '{provider_name}'")
+    if errors:
+        raise ValueError("Routing table validation failed:\n" + "\n".join(errors))
 
 
 @app.callback()
@@ -18,7 +28,7 @@ def main():
     setup_logging(settings.log_level, settings.log_format)
     catalog = ModelCatalog()
     try:
-        validate_routing_table_against_catalog(ROUTING_TABLE, catalog)
+        validate_routing_table(catalog)
     except ValueError as e:
         console.print(f"[red]Validation Error:[/red] {e}")
         raise typer.Exit(code=1)
@@ -40,7 +50,13 @@ def review(path: str = "."):
 
 @app.command()
 def providers():
-    from cli.commands.providers_cmd import show_providers
+    async def show_providers():
+        providers = build_providers(settings)
+        if not providers:
+            console.print("[yellow]No providers configured. Check your .env file.[/yellow]")
+            return
+        from cli.display import render_provider_status_table
+        render_provider_status_table(providers)
 
     asyncio.run(show_providers())
 
