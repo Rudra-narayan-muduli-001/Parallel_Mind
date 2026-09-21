@@ -1,8 +1,7 @@
-from core.agent_base import BaseAgent
 from core.models import AgentTask
 
 
-class CodeReviewerAgent(BaseAgent):
+class CodeReviewerAgent:
     async def execute(self, task: AgentTask, provider, model: str, api_key: str, gen_params: dict) -> dict:
         file_path = task.metadata.get("file_path", "unknown")
         prompt = (
