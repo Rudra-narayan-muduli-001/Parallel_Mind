@@ -10,15 +10,13 @@ from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader
 from starlette.requests import Request
 
-from config.effort_presets import EFFORT_PRESETS
-from config.settings import settings
+from config.settings import settings, EFFORT_PRESETS
 from core.executor import AgentExecutor
 from core.models import AgentResult, AgentTask
-from core.orchestrator import Orchestrator
+from core.pipeline import build_orchestrator, run_agent_batch
 from core.providers.model_catalog import ModelCatalog
 from core.providers.registry import build_providers
 from core.router.policies import ManualPolicy, RuleBasedPolicy
-from core.router.router import Router
 
 BASE_DIR = os.path.dirname(__file__)
 template_env = Environment(
@@ -27,23 +25,13 @@ template_env = Environment(
 )
 
 providers = build_providers(settings)
-
-
-async def _init_catalog() -> ModelCatalog:
-    try:
-        return await ModelCatalog.from_providers(providers)
-    except Exception:
-        return ModelCatalog()
+catalog = ModelCatalog()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global catalog
-    catalog = await _init_catalog()
     yield
 
-
-catalog: ModelCatalog = ModelCatalog()
 
 app = FastAPI(title="ParallelMind", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
@@ -88,23 +76,12 @@ async def get_models():
     return {"models": [{"provider": p, "id": m, "display": d} for p, m, d in models]}
 
 
-@app.post("/api/models/refresh")
-async def refresh_models():
-    global catalog
-    catalog = await _init_catalog()
-    models = catalog.list_models()
-    return {
-        "models": [{"provider": p, "id": m, "display": d} for p, m, d in models],
-        "refreshed_at": time.time(),
-    }
-
-
 @app.get("/api/effort-presets")
 async def get_effort_presets():
     return {"presets": {k: dict(v) for k, v in EFFORT_PRESETS.items()}}
 
 
-def _build_pipeline(mode: str, effort: str = "low", selected_targets: list[tuple] = None):
+def _build_policy_and_params(mode: str, effort: str = "low", selected_targets: list[tuple] = None):
     if mode == "manual" and selected_targets:
         policy = ManualPolicy(selected_targets, effort)
         gen_params = dict(EFFORT_PRESETS.get(effort, EFFORT_PRESETS["low"]))
@@ -113,39 +90,56 @@ def _build_pipeline(mode: str, effort: str = "low", selected_targets: list[tuple
         gen_params = {}
 
     gen_params.setdefault("rate_limit_cooldown_sec", settings.rate_limit_cooldown_sec)
-
-    router = Router(policy)
-    executor = AgentExecutor(providers, default_timeout=settings.default_timeout_sec)
-    orchestrator = Orchestrator(executor, router, max_concurrency=settings.default_max_concurrency)
-    return orchestrator, gen_params
+    return policy, gen_params
 
 
-def _instrument_orchestrator(orchestrator: Orchestrator, queue: asyncio.Queue):
-    original_run_one = orchestrator._run_one
+class _TracedOrchestrator:
+    def __init__(self, executor, policy, max_concurrency, queue):
+        self._executor = executor
+        self._policy = policy
+        self._max_concurrency = max_concurrency
+        self._queue = queue
 
-    async def traced_run_one(agent, task, gen_params):
-        await queue.put({"type": "task_start", "task_id": task.id, "prompt": task.prompt})
-        start = time.perf_counter()
-        result = await original_run_one(agent, task, gen_params)
-        elapsed = time.perf_counter() - start
-        if result.success:
-            await queue.put({
-                "type": "task_success",
-                "task_id": task.id,
-                "provider": result.provider_used,
-                "model": result.model_used,
-                "latency_sec": round(elapsed, 2),
-            })
-        else:
-            await queue.put({
-                "type": "task_fail",
-                "task_id": task.id,
-                "error": result.error or "failed",
-                "latency_sec": round(elapsed, 2),
-            })
-        return result
+    async def run_batch(self, agent, tasks: list[AgentTask], gen_params: dict | None = None) -> list[AgentResult]:
+        semaphore = asyncio.Semaphore(self._max_concurrency)
+        gen_params = gen_params or {}
 
-    orchestrator._run_one = traced_run_one
+        async def _run_one(task: AgentTask) -> AgentResult:
+            async with semaphore:
+                await self._queue.put({"type": "task_start", "task_id": task.id, "prompt": task.prompt})
+                candidates = await self._policy.decide(task)
+                start = time.perf_counter()
+                result = await self._executor.run(agent, task, candidates, gen_params)
+                elapsed = time.perf_counter() - start
+                if result.success:
+                    await self._queue.put({
+                        "type": "task_success",
+                        "task_id": task.id,
+                        "provider": result.provider_used,
+                        "model": result.model_used,
+                        "latency_sec": round(elapsed, 2),
+                    })
+                else:
+                    await self._queue.put({
+                        "type": "task_fail",
+                        "task_id": task.id,
+                        "error": result.error or "failed",
+                        "latency_sec": round(elapsed, 2),
+                    })
+                return result
+
+        results = await asyncio.gather(
+            *[_run_one(t) for t in tasks],
+            return_exceptions=True,
+        )
+        final: list[AgentResult] = []
+        for task, r in zip(tasks, results):
+            if isinstance(r, Exception):
+                final.append(AgentResult(task_id=task.id, success=False, error=str(r), latency_sec=0.0))
+            else:
+                assert isinstance(r, AgentResult)
+                final.append(r)
+        return final
 
 
 @app.post("/api/research")
@@ -162,12 +156,13 @@ async def research(request: Request):
             media_type="text/event-stream",
         )
 
-    orchestrator, gen_params = _build_pipeline(mode, effort, selected_targets)
-    from pipelines.research.pipeline import ResearchPipeline
-    pipeline = ResearchPipeline(orchestrator, providers, gen_params)
+    policy, gen_params = _build_policy_and_params(mode, effort, selected_targets)
+    executor = AgentExecutor(providers, default_timeout=settings.default_timeout_sec)
 
     queue: asyncio.Queue = asyncio.Queue()
-    _instrument_orchestrator(orchestrator, queue)
+    orchestrator = _TracedOrchestrator(executor, policy, settings.default_max_concurrency, queue)
+    from pipelines.research.pipeline import ResearchPipeline
+    pipeline = ResearchPipeline(executor, policy, providers, gen_params, max_concurrency=settings.default_max_concurrency)
 
     async def stream():
         yield {"type": "status", "message": "Planning research sub-questions..."}
@@ -206,12 +201,13 @@ async def review(request: Request):
     effort = body.get("effort", "low")
     selected_targets = [tuple(t) for t in body.get("targets", [])]
 
-    orchestrator, gen_params = _build_pipeline(mode, effort, selected_targets)
-    from pipelines.code_review.pipeline import CodeReviewPipeline
-    pipeline = CodeReviewPipeline(orchestrator, providers, gen_params)
+    policy, gen_params = _build_policy_and_params(mode, effort, selected_targets)
+    executor = AgentExecutor(providers, default_timeout=settings.default_timeout_sec)
 
     queue: asyncio.Queue = asyncio.Queue()
-    _instrument_orchestrator(orchestrator, queue)
+    orchestrator = _TracedOrchestrator(executor, policy, settings.default_max_concurrency, queue)
+    from pipelines.code_review.pipeline import CodeReviewPipeline
+    pipeline = CodeReviewPipeline(executor, policy, providers, gen_params, max_concurrency=settings.default_max_concurrency)
 
     async def stream():
         yield {"type": "status", "message": f"Scanning files in {path}..."}
