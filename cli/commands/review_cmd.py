@@ -1,34 +1,27 @@
 from cli.display import console
 from cli.wizard import run_wizard
-from config.effort_presets import EFFORT_PRESETS
-from config.settings import settings
+from config.settings import settings, EFFORT_PRESETS
 from core.executor import AgentExecutor
-from core.orchestrator import Orchestrator
 from core.providers.model_catalog import ModelCatalog
 from core.providers.registry import build_providers
 from core.router.policies import ManualPolicy, RuleBasedPolicy
-from core.router.router import Router
 from pipelines.code_review.pipeline import CodeReviewPipeline
 
 
 async def run_review(path: str):
     providers = build_providers(settings)
-    catalog = await ModelCatalog.from_providers(providers)
+    catalog = ModelCatalog()
     run_config = run_wizard(catalog)
-    providers = build_providers(settings)
 
     if run_config.mode == "manual":
-        policy: RuleBasedPolicy | ManualPolicy = ManualPolicy(run_config.selected_targets, run_config.effort)
+        policy = ManualPolicy(run_config.selected_targets, run_config.effort)
         gen_params = dict(EFFORT_PRESETS[run_config.effort])
     else:
         policy = RuleBasedPolicy(providers=providers, catalog=catalog)
         gen_params = {}
 
-    router = Router(policy)
     executor = AgentExecutor(providers, default_timeout=settings.default_timeout_sec)
-    orchestrator = Orchestrator(executor, router, max_concurrency=settings.default_max_concurrency)
-
-    pipeline = CodeReviewPipeline(orchestrator, providers, gen_params)
+    pipeline = CodeReviewPipeline(executor, policy, providers, gen_params, max_concurrency=settings.default_max_concurrency)
     result = await pipeline.run(path)
 
     if result.success:
