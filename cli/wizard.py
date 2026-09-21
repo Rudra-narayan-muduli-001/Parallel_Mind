@@ -1,22 +1,32 @@
 from rich.console import Console
+from types import SimpleNamespace
 
-from cli.display import parse_comma_indices
-from cli.run_config import RunConfig
 from core.providers.model_catalog import ModelCatalog
 
 console = Console()
 
 
-def run_wizard(catalog: ModelCatalog) -> RunConfig:
+def parse_comma_indices(raw: str, max_index: int) -> list[int]:
+    indices = []
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit():
+            i = int(part) - 1
+            if 0 <= i < max_index:
+                indices.append(i)
+    return indices
+
+
+def run_wizard(catalog: ModelCatalog) -> SimpleNamespace:
     console.print("\n[bold]Select configuration mode:[/bold]")
     console.print("1. Default")
     console.print("2. Manual")
     mode_choice = console.input("> ").strip()
 
     if mode_choice != "2":
-        return RunConfig(mode="default")
+        return SimpleNamespace(mode="default", effort="low", selected_targets=[])
 
-    config = RunConfig(mode="manual")
+    config = SimpleNamespace(mode="manual", effort="low", selected_targets=[])
 
     console.print("\n[bold]Set Effort[/bold]")
     console.print("1. Low")
@@ -31,9 +41,9 @@ def run_wizard(catalog: ModelCatalog) -> RunConfig:
         console.print(f"{i}. {pname}")
     raw = console.input("> ").strip()
     chosen_indices = parse_comma_indices(raw, len(provider_names))
-    config.selected_providers = [provider_names[i] for i in chosen_indices] or provider_names
+    selected_providers = [provider_names[i] for i in chosen_indices] or provider_names
 
-    models = catalog.list_models(config.selected_providers)
+    models = catalog.list_models(selected_providers)
     console.print("\n[bold]Select Model(s)[/bold]")
     console.print("[dim]Tip: to select multiple, separate numbers with commas, e.g. 1,2,4[/dim]")
     for i, (_, _, display) in enumerate(models, start=1):
@@ -44,6 +54,6 @@ def run_wizard(catalog: ModelCatalog) -> RunConfig:
 
     if not config.selected_targets:
         console.print("[red]No models selected — falling back to default mode.[/red]")
-        return RunConfig(mode="default")
+        return SimpleNamespace(mode="default", effort="low", selected_targets=[])
 
     return config
