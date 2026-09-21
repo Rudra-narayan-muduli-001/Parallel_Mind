@@ -1,13 +1,21 @@
 from rich.console import Console
 from rich.table import Table
 
-from config.effort_presets import EFFORT_PRESETS
-from config.routing_table import ROUTING_TABLE
-from config.settings import settings
+from config.settings import settings, EFFORT_PRESETS
 from core.providers.model_catalog import ModelCatalog
-from utils.validation import validate_routing_table_against_catalog
+from core.router.policies import ROUTING_TABLE
 
 console = Console()
+
+
+def validate_routing_table(catalog: ModelCatalog):
+    errors = []
+    for (task_type, tier), candidates in ROUTING_TABLE.items():
+        for provider_name, model_id in candidates:
+            if not catalog.is_valid_model(provider_name, model_id):
+                errors.append(f"Routing table references unknown model '{model_id}' for provider '{provider_name}'")
+    if errors:
+        raise ValueError("Routing table validation failed:\n" + "\n".join(errors))
 
 
 async def check_config():
@@ -28,7 +36,7 @@ async def check_config():
 
     catalog = ModelCatalog()
     try:
-        validate_routing_table_against_catalog(ROUTING_TABLE, catalog)
+        validate_routing_table(catalog)
         console.print("[green]OK - Routing table validated against model catalog[/green]")
     except ValueError as e:
         console.print(f"[red]FAIL - Routing table validation failed:[/red] {e}")
