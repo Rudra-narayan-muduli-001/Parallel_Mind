@@ -9,13 +9,12 @@
 
 <p align="center">
   <strong>🚀 Lightweight parallel AI agent orchestration framework</strong><br>
-  Route tasks across multiple LLM providers with round-robin failover, circuit breakers, and configurable routing policies.
+  Route tasks across multiple LLM providers with immediate failover, circuit breakers, and configurable routing policies.
 </p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Python-3.12+-blue.svg" alt="Python 3.12+">
-  <img src="https://img.shields.io/badge/Tests-45%20passed-brightgreen.svg" alt="Tests: 45 passed">
   <img src="https://img.shields.io/badge/Async-asyncio-7B5FA6.svg" alt="Async asyncio">
   <img src="https://img.shields.io/badge/Web-FastAPI%20%2B%20SSE-009688.svg" alt="Web: FastAPI + SSE">
   <img src="https://img.shields.io/badge/CLI-Typer%20%2B%20Rich-F37626.svg" alt="CLI: Typer + Rich">
@@ -43,15 +42,14 @@
 | Category | Details |
 |---|---|
 | 🔗 **Providers** | OpenAI, Anthropic, Groq, OpenRouter, NVIDIA NIM, OpenCode Zen |
-| 🔄 **Live Model Discovery** | Fetches the current model list from each provider's `/models` API at startup — no stale config |
-| 🔑 **Key Management** | Round-robin across API keys with auto-recovery after cooldown |
+| 🔑 **Key Management** | Round-robin across comma-separated API keys with per-key cooldown and auto-recovery |
 | 🛡️ **Failover** | Immediate failover across providers *and* models — no delay between attempts |
 | ⏳ **Rate-Limit Handling** | 429-aware: per-provider cooldown, parallel tasks skip throttled providers instantly |
-| 🧯 **Circuit Breaker** | Per-provider circuit breaker with automatic key health tracking |
+| 🧯 **Circuit Breaker** | Per-provider breaker (CLOSED → OPEN → HALF_OPEN) with automatic key health tracking |
 | 🎯 **Routing** | 5-tier complexity routing (low / mid / high / xhigh / max) per task type |
 | 🆓 **Free-First Defaults** | Ships configured for free-tier models (`DEFAULT_PROVIDER`, `FREE_MODELS_ONLY`) — works without paid keys |
 | 🧭 **Routing Modes** | Rule-based (default), Manual (user-selected), LLM-based (meta-router) |
-| 💬 **CLI** | Interactive wizard with Default and Manual modes |
+| 💬 **CLI** | Interactive Default/Manual wizard before each research or review run |
 | 🌐 **Web UI** | Chat-style dashboard with SSE streaming, conversation history (localStorage), markdown rendering |
 | 👁️ **Parallel Viz** | Real-time visualization of each parallel agent task — start/finish, provider/model used, latency |
 | 📊 **Pipelines** | Research (topic decomposition + parallel synthesis), Code Review (file-aware parallel review) |
@@ -82,13 +80,12 @@ pip install -r requirements.txt
 # 2️⃣ Configure your API keys
 cp .env.example .env
 # ✏️ Edit .env — fill in keys for the providers you use
-# (works out of the box with only a free OpenCode Zen key)
 
 # 3️⃣ Launch the web UI
 python run.py
 # 🌐 Open http://127.0.0.1:8080 — chat-style research + parallel agent viz
 
-# 4️⃣ Or use the CLI
+# 4️⃣ Or use the CLI (each command opens the interactive wizard first)
 parallelmind research "Explain quantum computing fundamentals"
 parallelmind review ./src
 
@@ -97,9 +94,7 @@ parallelmind providers
 parallelmind config
 ```
 
-> 🎮 Run `parallelmind` without arguments to enter the interactive CLI wizard.
 > 🌐 `python run.py` or `parallelmind web` both start the dashboard at http://127.0.0.1:8080.
-> 🚀 Or simply: **`run.py`** → type a topic in the chat box, hit Enter, watch the parallel agents run live.
 
 ---
 
@@ -107,11 +102,11 @@ parallelmind config
 
 | Command | Description |
 |---|---|
-| 📚 `parallelmind research <topic>` | Decompose a topic into sub-questions, research in parallel, synthesize a report |
-| 🔍 `parallelmind review <path>` | Review all supported source files in a directory in parallel |
+| 📚 `parallelmind research <topic>` | Wizard → decompose topic into sub-questions, research in parallel, synthesize a report |
+| 🔍 `parallelmind review <path>` | Wizard → review all supported source files in a path in parallel |
 | 🌐 `parallelmind web` | Launch the web dashboard (default: http://127.0.0.1:8080) |
 | 📡 `parallelmind providers` | Show configured providers and their health status |
-| ✅ `parallelmind config` | Validate routing table, show settings, check model catalog |
+| ✅ `parallelmind config` | Validate routing table, show settings, list model catalog |
 
 ---
 
@@ -120,19 +115,21 @@ parallelmind config
 | File | Purpose |
 |---|---|
 | 📝 `.env` | API keys (comma-separated), base URLs, default models, orchestration settings |
-| 🧾 `config/settings.py` | `pydantic-settings` loader with typed access to `.env` |
-| 📦 `config/model_catalog.yaml` | Fallback model inventory — augmented by **live discovery** from each provider's API |
-| 🗺️ `config/routing_table.py` | 5-tier routing policies per task type for `RuleBasedPolicy` |
-| 🎚️ `config/effort_presets.py` | Low/High/X-High/Max effort presets (temperature, max_tokens, timeout) |
+| 🧾 `config/settings.py` | `pydantic-settings` loader + `EFFORT_PRESETS` (low / high / xhigh / max) |
+| 📦 `config/model_catalog.yaml` | Static model inventory used by menus, free-model fallback, and routing-table validation |
+| 🗺️ `core/router/policies.py` | `ROUTING_TABLE` — 5-tier candidates per task type for `RuleBasedPolicy` |
 
 ### Key `.env` settings
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DEFAULT_PROVIDER` | `opencode_zen` | Provider whose models are preferred for all tasks |
+| `DEFAULT_PROVIDER` | `opencode_zen` | Provider whose free models are preferred when free-first is on |
 | `FREE_MODELS_ONLY` | `true` | Restrict candidates to free-tier models (`-free` / `:free`) |
 | `DEFAULT_MAX_CONCURRENCY` | `3` | Max parallel agent tasks per run |
+| `DEFAULT_TIMEOUT_SEC` | `60` | Per-candidate attempt timeout |
 | `RATE_LIMIT_COOLDOWN_SEC` | `30` | How long to skip a provider after a 429 |
+| `CIRCUIT_BREAKER_FAIL_THRESHOLD` | `5` | Consecutive failures before a provider's breaker opens |
+| `CIRCUIT_BREAKER_RESET_SEC` | `60` | Cool-down before a HALF_OPEN trial request |
 | `ROUTING_MODE` | `rule_based` | Also supports `llm_based` and `manual` |
 
 > 💡 **Free-first design:** With the defaults, ParallelMind routes everything through free-tier models of one provider and fails over instantly between them — so it works without any paid API keys.
@@ -145,12 +142,12 @@ parallelmind config
 
 ```
 ┌─────────┐    ┌────────────────────┐     ┌────────────────────┐    ┌────────────────┐    ┌─────────┐
-│  Topic  │──▶│ Planner (LLM       │──▶│ Parallel Researcher│──▶│ LLM Synthesis │──▶│ Report  │
-└─────────┘    │ decomposition)     │     │ Agents (5x conc.)  │    │ Aggregator     │    └─────────┘
+│  Topic  │──▶│ ResearchPlanner    │──▶│ Parallel Researcher│──▶│ LLM Synthesis │──▶│ Report  │
+└─────────┘    │ (LLM, 3–5 Qs)     │     │ Agents (semaphore) │    │ Aggregator     │    └─────────┘
                └────────────────────┘     └────────────────────┘    └────────────────┘
 ```
 
-- `ResearchPlanner` decomposes a topic into 3-5 sub-questions with complexity tiers
+- `ResearchPlanner` makes one LLM call per attempt (rotating across configured providers) to decompose a topic into sub-questions tagged with complexity tiers
 - `ResearcherAgent` answers each sub-question concurrently
 - `LLMSynthesisAggregator` merges findings into a coherent report
 
@@ -158,12 +155,12 @@ parallelmind config
 
 ```
 ┌────────┐    ┌────────────────────┐     ┌────────────────────┐    ┌────────────────┐     ┌─────────┐
-│  Path  │──▶│ Splitter (file +   │──▶│ Parallel Reviewer  │──▶│ Dedupe Merge   │──▶│ Report  │
-└────────┘    │ tier assignment)   │     │ Agents (5x conc.)  │    │ Aggregator     │     └─────────┘
+│  Path  │──▶│ CodeReviewSplitter │──▶│ Parallel Reviewer │──▶│ Dedupe Merge  │──▶│ Report  │
+└────────┘    │ (files + tiers)    │     │ Agents (semaphore) │    │ Aggregator     │     └─────────┘
               └────────────────────┘     └────────────────────┘    └────────────────┘
 ```
 
-- `CodeReviewSplitter` discovers source files and assigns complexity tiers by line count
+- `CodeReviewSplitter` discovers source files (no LLM call) and assigns complexity tiers by line count
 - `CodeReviewerAgent` reviews each file for bugs, security, and best practices
 - `DedupeMergeAggregator` combines findings without duplicates
 
@@ -175,9 +172,6 @@ parallelmind config
 |---|---|---|
 | 🧠 `LLMSynthesisAggregator` | Merges results with one final LLM call; walks every provider for failover, falls back to raw findings on 429 | Research pipeline |
 | 🔗 `DedupeMergeAggregator` | Concatenates unique results (pure Python) | Code review pipeline |
-| 🗳️ `VotingAggregator` | Picks most common output across candidates | Future use |
-| ⚡ `FirstSuccessAggregator` | Returns first successful result | Future use |
-| 📜 `ConcatAggregator` | Simple concatenation of all outputs | Future use |
 
 ---
 
@@ -187,7 +181,7 @@ parallelmind config
 pytest
 ```
 
-✅ 45 tests total: **34** in `tests/`, **11** in `cli/`.
+> ⚠️ Some tests still import modules removed in the recent simplification pass and fail at collection; update or delete those tests alongside future refactors.
 
 > 🛠️ Also run: `ruff check .` for linting, `mypy .` for type checking.
 
@@ -197,21 +191,25 @@ pytest
 
 ```
 Parallel Mind/
-├── 📂 cli/                  Typer CLI: main, wizard, display, commands
-├── 📂 config/               Settings, routing table, effort presets, model catalog
+├── 📂 cli/                  Typer CLI: main, wizard, display, commands (research, review, config)
+├── 📂 config/               Settings + effort presets, model catalog (YAML)
 ├── 📂 core/
-│   ├── 📂 aggregation/      Aggregation strategies (Synthesis, Dedupe, Voting, etc.)
-│   ├── 📂 providers/        LLM providers + live model discovery + key pool + circuit breaker
-│   ├── 📂 router/           Routing policies (rule-based, manual, LLM-based)
-│   └── 📂 state/            Shared context (lock-protected, optional)
+│   ├── 📂 aggregation/      Aggregation strategies (LLM Synthesis, Dedupe)
+│   ├── 📂 providers/        Provider implementations + registry + model catalog loader
+│   │                        (key pool + circuit breaker live inside BaseProvider)
+│   ├── 📂 router/           Routing policies + ROUTING_TABLE (rule-based, manual, LLM-based)
+│   ├── 📂 state/            Shared context (lock-protected, optional)
+│   ├── 📄 executor.py       Candidate walk, failover, 429 cooldown, timeouts
+│   ├── 📄 models.py         AgentTask / AgentResult contracts
+│   └── 📄 pipeline.py       Batch runner: semaphore + asyncio.gather orchestrator
 ├── 📂 pipelines/
-│   ├── 📂 research/         Research pipeline (planner + researcher + aggregator)
-│   └── 📂 code_review/      Code review pipeline (splitter + reviewer + aggregator)
+│   ├── 📂 research/         Research pipeline (planner + researcher)
+│   └── 📂 code_review/      Code review pipeline (splitter + reviewer)
 ├── 📂 web/                  FastAPI web server: SSE streaming, chat UI, parallel viz
-│   ├── 📄 server.py         REST + SSE endpoints, orchestrator instrumentation
+│   ├── 📄 server.py         REST + SSE endpoints, traced orchestrator for live events
 │   ├── 📂 templates/        Jinja2 dashboard (chat interface)
 │   └── 📂 static/           CSS + JS (markdown rendering, viz, history)
-├── 📂 utils/                Logging and validation utilities
+├── 📂 utils/                Logging utilities
 ├── 📂 tests/                Core unit tests
 ├── 📄 run.py                One-command launcher for the web UI
 ├── 📄 architecture.md       Full system architecture document
@@ -231,7 +229,7 @@ Launch with `python run.py` and open **http://127.0.0.1:8080**:
 - ➕ **New Conversation** button for fresh sessions
 - 🎚️ **Manual mode** — pick exact providers/models and effort level (Low / High / X-High / Max)
 - 📡 **Providers tab** — health status of every configured provider
-- ⚙️ **Config tab** — live settings plus full model catalog with a Refresh button that re-fetches models from provider APIs on demand
+- ⚙️ **Config tab** — live settings plus the model catalog
 
 ---
 
