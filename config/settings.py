@@ -24,10 +24,6 @@ class Settings(BaseSettings):
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_nim_default_model: str = "llama-3.3-nemotron-super-49b-v1.5"
 
-    opencode_zen_api_keys: str = ""
-    opencode_zen_base_url: str = "https://opencode.ai/zen/v1"
-    opencode_zen_default_model: str = ""
-
     default_max_concurrency: int = 3
     default_timeout_sec: int = 60
     circuit_breaker_fail_threshold: int = 5
@@ -38,7 +34,7 @@ class Settings(BaseSettings):
     router_model_provider: str = "groq"
     router_model_name: str = "llama-3.1-8b-instant"
 
-    default_provider: str = "opencode_zen"
+    default_provider: str = "groq"
     free_models_only: bool = True
 
     log_level: str = "INFO"
@@ -74,11 +70,6 @@ class Settings(BaseSettings):
                 "api_keys": self._split_keys(self.nvidia_nim_api_keys),
                 "base_url": self.nvidia_nim_base_url,
                 "default_model": self.nvidia_nim_default_model,
-            },
-            "opencode_zen": {
-                "api_keys": self._split_keys(self.opencode_zen_api_keys),
-                "base_url": self.opencode_zen_base_url,
-                "default_model": self.opencode_zen_default_model,
             },
         }
 
