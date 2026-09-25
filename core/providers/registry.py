@@ -2,7 +2,7 @@ from core.providers.anthropic_provider import AnthropicProvider
 from core.providers.base import BaseProvider
 from core.providers.openai_compatible import OpenAICompatibleProvider
 
-OPENAI_COMPATIBLE_PROVIDERS = {"openai", "groq", "openrouter", "nvidia_nim", "opencode_zen"}
+OPENAI_COMPATIBLE_PROVIDERS = {"openai", "groq", "openrouter", "nvidia_nim"}
 
 
 def build_providers(settings) -> dict[str, BaseProvider]:
