@@ -7,182 +7,340 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="app">
-        <aside class="sidebar">
-            <div class="logo">
-                <span class="logo-icon">⬡</span>
-                <span class="logo-text">ParallelMind</span>
+    <div class="app" role="application">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <a href="#" class="logo" aria-label="ParallelMind Home">
+                    <span class="logo-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+                            <polyline points="2 8.5 12 15.5 22 8.5"></polyline>
+                            <polyline points="2 15.5 12 8.5 22 15.5"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="22"></line>
+                        </svg>
+                    </span>
+                    <span class="logo-text">ParallelMind</span>
+                </a>
             </div>
-            <nav class="nav">
-                <button class="nav-btn active" data-tab="research">
-                    <span class="nav-icon">📚</span> Research
+
+            <nav class="sidebar-nav" aria-label="Primary tabs">
+                <button class="nav-btn active" data-tab="research" role="tab" aria-selected="true" aria-controls="panel-research">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Research</span>
+                    <span class="nav-shortcut" aria-hidden="true">⌘1</span>
                 </button>
-                <button class="nav-btn" data-tab="review">
-                    <span class="nav-icon">🔍</span> Review
+                <button class="nav-btn" data-tab="review" role="tab" aria-selected="false" aria-controls="panel-review">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Code Review</span>
+                    <span class="nav-shortcut" aria-hidden="true">⌘2</span>
                 </button>
-                <button class="nav-btn" data-tab="providers">
-                    <span class="nav-icon">📡</span> Providers
+                <button class="nav-btn" data-tab="providers" role="tab" aria-selected="false" aria-controls="panel-providers">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                            <path d="M8 21h8"></path>
+                            <path d="M12 17v4"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Providers</span>
+                    <span class="nav-shortcut" aria-hidden="true">⌘3</span>
                 </button>
-                <button class="nav-btn" data-tab="config">
-                    <span class="nav-icon">⚙️</span> Config
+                <button class="nav-btn" data-tab="config" role="tab" aria-selected="false" aria-controls="panel-config">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 10 3.17V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Settings</span>
+                    <span class="nav-shortcut" aria-hidden="true">⌘4</span>
                 </button>
             </nav>
 
             <!-- History Section -->
-            <div class="history-section">
+            <div class="history-section" role="region" aria-label="Conversation history">
                 <div class="history-header">
                     <span class="history-title">History</span>
-                    <button class="history-clear-all" id="btn-clear-all" title="Clear all history">🗑️</button>
+                    <button class="icon-btn history-clear-all" id="btn-clear-all" aria-label="Clear all conversations" title="Clear all history">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
                 </div>
-                <div class="history-list" id="history-list">
+                <div class="history-list" id="history-list" role="listbox" aria-label="Conversations">
                     <p class="history-empty">No conversations yet</p>
                 </div>
             </div>
 
             <div class="sidebar-footer">
-                <span class="version">v0.1.0</span>
+                <span class="version" id="app-version">v0.1.0</span>
+                <span class="divider" aria-hidden="true"></span>
+                <span class="status-indicator" id="connection-status" aria-live="polite">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span class="status-text">Connected</span>
+                </span>
             </div>
         </aside>
 
-        <main class="main">
-            <!-- Research Tab -->
-            <section class="tab-content active" id="tab-research">
+        <!-- Main Content Area -->
+        <main class="main" role="main">
+            <!-- Research Tab Panel -->
+            <section class="tab-panel active" id="panel-research" role="tabpanel" aria-labelledby="tab-research">
                 <div class="chat-container">
-                    <div class="chat-toolbar">
-                        <button class="btn-new-chat" id="btn-new-chat">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                            New Conversation
-                        </button>
-                        <span class="chat-title-display" id="current-chat-title"></span>
+                    <!-- Chat Toolbar -->
+                    <div class="chat-toolbar" role="toolbar" aria-label="Chat actions">
+                        <div class="toolbar-left">
+                            <button class="btn btn-primary btn-new-chat" id="btn-new-chat" aria-label="New conversation (⌘N)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 5v14M5 12h14"></path>
+                                </svg>
+                                <span>New Chat</span>
+                            </button>
+                            <span class="chat-title" id="current-chat-title" aria-live="polite"></span>
+                        </div>
+                        <div class="toolbar-right">
+                            <div class="mode-selector" id="research-mode-selector">
+                                <label for="research-mode" class="sr-only">Research mode</label>
+                                <select id="research-mode" aria-describedby="mode-description">
+                                    <option value="default">Default (Auto)</option>
+                                    <option value="manual">Manual</option>
+                                </select>
+                            </div>
+                            <div class="effort-selector" id="research-effort-selector" style="display: none;">
+                                <label for="research-effort" class="sr-only">Effort level</label>
+                                <select id="research-effort" aria-describedby="effort-description">
+                                    <option value="low">Low</option>
+                                    <option value="high">High</option>
+                                    <option value="xhigh">X-High</option>
+                                    <option value="max">Max</option>
+                                </select>
+                            </div>
+                            <button class="icon-btn targets-toggle" id="btn-research-targets" aria-label="Select providers and models" aria-expanded="false" aria-controls="research-targets-panel" title="Providers & Models">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 10 3.17V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="chat-messages" id="research-messages">
+
+                    <!-- Chat Messages Area -->
+                    <div class="chat-messages" id="research-messages" role="log" aria-live="polite" aria-label="Conversation messages">
                         <div class="chat-welcome" id="research-welcome">
-                            <div class="welcome-icon">📚</div>
-                            <h2>Research Assistant</h2>
-                            <p>Ask me any topic and I'll decompose it into sub-questions, research them in parallel, and synthesize a comprehensive report.</p>
-                            <div class="welcome-examples">
-                                <button class="example-chip" data-topic="Explain quantum computing fundamentals">Quantum Computing</button>
-                                <button class="example-chip" data-topic="How do large language models work?">LLMs Explained</button>
-                                <button class="example-chip" data-topic="What are the latest advances in renewable energy?">Renewable Energy</button>
+                            <div class="welcome-illustration" aria-hidden="true">
+                                <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                                    <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                                    <circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+                                    <path d="M50 20 L50 35 M50 65 L50 80" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M20 50 L35 50 M65 50 L80 50" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <circle cx="50" cy="50" r="15" stroke="currentColor" stroke-width="2" fill="currentColor" opacity="0.15"/>
+                                </svg>
+                            </div>
+                            <h2 class="welcome-title">Research Assistant</h2>
+                            <p class="welcome-description">Enter any topic and I'll decompose it into sub-questions, research them in parallel across multiple models, and synthesize a comprehensive report.</p>
+                            <div class="welcome-examples" role="group" aria-label="Example topics">
+                                <button type="button" class="example-chip" data-topic="Explain quantum computing fundamentals">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                    <span>Quantum Computing</span>
+                                </button>
+                                <button type="button" class="example-chip" data-topic="How do large language models work?">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    <span>LLMs Explained</span>
+                                </button>
+                                <button type="button" class="example-chip" data-topic="What are the latest advances in renewable energy?">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                    <span>Renewable Energy</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="chat-input-area">
-                        <div class="chat-input-wrapper">
-                            <textarea id="research-input" placeholder="Ask a research topic... (Enter to send, Shift+Enter for new line)" rows="1"></textarea>
-                            <button class="chat-send-btn" id="btn-research" title="Start Research">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+
+                    <!-- Parallel Execution Visualization (injected dynamically) -->
+                    <div id="parallel-viz-container" class="parallel-viz-container" aria-live="polite" aria-label="Parallel execution status" style="display: none;"></div>
+
+                    <!-- Chat Input Area -->
+                    <div class="chat-input-area" role="form" aria-label="Research input">
+                        <div class="chat-input-wrapper" id="chat-input-wrapper">
+                            <textarea
+                                id="research-input"
+                                placeholder="Ask a research topic… (Enter to send, Shift+Enter for new line)"
+                                rows="1"
+                                aria-label="Research topic"
+                                aria-describedby="input-hint"
+                            ></textarea>
+                            <button
+                                class="chat-send-btn"
+                                id="btn-research"
+                                aria-label="Start research"
+                                disabled
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 19V5"></path>
+                                    <path d="M5 12l7-7 7 7"></path>
+                                </svg>
                             </button>
                         </div>
-                        <div class="chat-controls">
-                            <select id="research-mode">
-                                <option value="default">Default</option>
-                                <option value="manual">Manual</option>
-                            </select>
-                            <select id="research-effort" style="display:none">
-                                <option value="low">Low</option>
-                                <option value="high">High</option>
-                                <option value="xhigh">X-High</option>
-                                <option value="max">Max</option>
-                            </select>
-                            <button class="targets-toggle" id="btn-research-targets" title="Select providers/models">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 10 3.17V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                            </button>
-                        </div>
-                        <div class="targets-panel" id="research-targets-panel" style="display:none">
-                            <div class="targets-list" id="research-targets"></div>
+                        <p class="sr-only" id="input-hint">Press Enter to send, Shift+Enter for new line</p>
+
+                        <div class="chat-controls" id="chat-controls">
+                            <div class="targets-panel" id="research-targets-panel" role="group" aria-label="Selected providers and models" style="display: none;">
+                                <div class="targets-header">
+                                    <span class="targets-title">Selected Targets</span>
+                                    <button type="button" class="icon-btn targets-clear" aria-label="Clear all selections">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                                <div class="targets-list" id="research-targets" role="listbox" aria-label="Provider/model selections"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Review Tab -->
-            <section class="tab-content" id="tab-review">
-                <header class="tab-header">
-                    <h1>Code Review</h1>
-                    <p class="subtitle">Review all supported source files in a directory in parallel.</p>
+            <!-- Code Review Tab Panel -->
+            <section class="tab-panel" id="panel-review" role="tabpanel" aria-labelledby="tab-review" hidden>
+                <header class="panel-header">
+                    <div>
+                        <h1 class="panel-title">Code Review</h1>
+                        <p class="panel-description">Review all supported source files in a directory in parallel with AI-powered analysis.</p>
+                    </div>
                 </header>
 
-                <div class="card">
-                    <label class="label">Path</label>
-                    <input type="text" id="review-path" placeholder="./src" value="./" />
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="label">Mode</label>
-                            <select id="review-mode">
-                                <option value="default">Default (Rule-based)</option>
-                                <option value="manual">Manual</option>
-                            </select>
+                <div class="panel-content">
+                    <form class="review-form" id="review-form">
+                        <div class="form-field">
+                            <label for="review-path" class="form-label">Directory Path</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                <input
+                                    type="text"
+                                    id="review-path"
+                                    placeholder="./src"
+                                    value="./"
+                                    class="form-input"
+                                    aria-describedby="path-hint"
+                                >
+                            </div>
+                            <p class="form-hint" id="path-hint">Enter a relative or absolute path to review</p>
                         </div>
-                        <div class="form-group manual-only" style="display:none">
-                            <label class="label">Effort</label>
-                            <select id="review-effort">
-                                <option value="low">Low</option>
-                                <option value="high">High</option>
-                                <option value="xhigh">X-High</option>
-                                <option value="max">Max</option>
-                            </select>
+
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="review-mode" class="form-label">Mode</label>
+                                <select id="review-mode" class="form-select" aria-describedby="mode-hint">
+                                    <option value="default">Default (Rule-based)</option>
+                                    <option value="manual">Manual</option>
+                                </select>
+                            </div>
+                            <div class="form-field manual-only" id="review-effort-field" hidden>
+                                <label for="review-effort" class="form-label">Effort</label>
+                                <select id="review-effort" class="form-select">
+                                    <option value="low">Low</option>
+                                    <option value="high">High</option>
+                                    <option value="xhigh">X-High</option>
+                                    <option value="max">Max</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group manual-only" style="display:none">
-                        <label class="label">Providers & Models</label>
-                        <div class="targets-list" id="review-targets"></div>
-                    </div>
+                        <div class="form-field manual-only" id="review-targets-field" hidden>
+                            <label class="form-label">Providers & Models</label>
+                            <div class="targets-panel">
+                                <div class="targets-list" id="review-targets" role="listbox" aria-label="Provider/model selections"></div>
+                            </div>
+                        </div>
 
-                    <button class="btn btn-primary" id="btn-review">
-                        <span class="btn-icon">🔍</span> Start Review
-                    </button>
-                </div>
-
-                <div class="card result-card" id="review-result" style="display:none">
-                    <div class="result-header">
-                        <h3>Result</h3>
-                        <span class="status-badge" id="review-status"></span>
-                    </div>
-                    <div class="result-body" id="review-output"></div>
-                </div>
-            </section>
-
-            <!-- Providers Tab -->
-            <section class="tab-content scrollable" id="tab-providers">
-                <header class="tab-header">
-                    <h1>Providers</h1>
-                    <p class="subtitle">Configured LLM providers and their health status.</p>
-                </header>
-
-                <div class="card">
-                    <div id="providers-list" class="providers-grid">
-                        <p class="loading">Loading providers...</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Config Tab -->
-            <section class="tab-content scrollable" id="tab-config">
-                <header class="tab-header">
-                    <h1>Configuration</h1>
-                    <p class="subtitle">Current system configuration and available models.</p>
-                </header>
-
-                <div class="card">
-                    <h3 class="section-title">Settings</h3>
-                    <div id="config-list" class="config-list">
-                        <p class="loading">Loading config...</p>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header-row">
-                        <h3 class="section-title">Available Models</h3>
-                        <button class="btn-refresh" id="btn-refresh-models" title="Refresh model list from provider APIs">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-                            <span>Refresh</span>
+                        <button type="submit" class="btn btn-primary btn-block" id="btn-review">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                            <span>Start Review</span>
                         </button>
+                    </form>
+
+                    <!-- Review Result -->
+                    <div class="result-panel" id="review-result" hidden>
+                        <div class="result-header">
+                            <h2 class="result-title">Review Results</h2>
+                            <span class="status-badge" id="review-status"></span>
+                        </div>
+                        <div class="result-content" id="review-output"></div>
                     </div>
-                    <div id="models-list" class="models-list">
-                        <p class="loading">Loading models...</p>
+                </div>
+            </section>
+
+            <!-- Providers Tab Panel -->
+            <section class="tab-panel" id="panel-providers" role="tabpanel" aria-labelledby="tab-providers" hidden>
+                <header class="panel-header">
+                    <div>
+                        <h1 class="panel-title">Providers</h1>
+                        <p class="panel-description">Configured LLM providers and their health status.</p>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" id="btn-refresh-providers" aria-label="Refresh provider status">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </button>
+                </header>
+
+                <div class="panel-content">
+                    <div class="providers-grid" id="providers-list" role="list" aria-label="Provider status cards">
+                        <div class="loading-state" aria-live="polite">
+                            <div class="spinner" aria-hidden="true"></div>
+                            <span>Loading providers…</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Config Tab Panel -->
+            <section class="tab-panel" id="panel-config" role="tabpanel" aria-labelledby="tab-config" hidden>
+                <header class="panel-header">
+                    <div>
+                        <h1 class="panel-title">Settings</h1>
+                        <p class="panel-description">Current system configuration and available models.</p>
+                    </div>
+                </header>
+
+                <div class="panel-content">
+                    <div class="settings-section">
+                        <h3 class="section-title">Configuration</h3>
+                        <div class="settings-grid" id="config-list" role="list" aria-label="Settings">
+                            <div class="loading-state" aria-live="polite">
+                                <div class="spinner" aria-hidden="true"></div>
+                                <span>Loading config…</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Available Models</h3>
+                            <button class="btn btn-ghost btn-sm" id="btn-refresh-models" aria-label="Refresh model list from provider APIs">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                        <div class="models-list" id="models-list" role="list" aria-label="Available models">
+                            <div class="loading-state" aria-live="polite">
+                                <div class="spinner" aria-hidden="true"></div>
+                                <span>Loading models…</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
