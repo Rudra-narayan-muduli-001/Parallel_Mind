@@ -1,8 +1,6 @@
 import pytest
 
-from core.models import AgentTask
 from pipelines.research.planner import ResearchPlanner
-
 
 # -- _parse tests --
 
