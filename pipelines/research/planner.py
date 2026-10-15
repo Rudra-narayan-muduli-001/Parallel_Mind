@@ -76,7 +76,23 @@ class ResearchPlanner:
                     provider.mark_rate_limited(cooldown_sec=30.0)
                 continue
 
-        raise RuntimeError(f"Planner exhausted all candidates: {last_error}")
+        logger.warning(f"Planner exhausted all candidates: {last_error} — using local fallback")
+        return ResearchPlanner._local_fallback(topic)
+
+    @staticmethod
+    def _local_fallback(topic: str) -> list[AgentTask]:
+        return [
+            AgentTask(
+                id=f"research-{i}",
+                prompt=f"{sub_q} {topic}",
+                metadata={"task_type": "research", "complexity_tier": tier},
+            )
+            for i, (tier, sub_q) in enumerate([
+                ("low", "What is the basic definition of"),
+                ("mid", "How does it work in practice for"),
+                ("high", "What are the advanced implications of"),
+            ])
+        ]
 
     @staticmethod
     def _parse(text: str, topic: str) -> list[AgentTask]:
@@ -98,5 +114,5 @@ class ResearchPlanner:
                 )
             )
         if not tasks:
-            raise ValueError("Planner returned no valid tasks")
+            return ResearchPlanner._local_fallback(topic)
         return tasks
