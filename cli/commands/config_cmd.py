@@ -1,7 +1,7 @@
 from rich.console import Console
 from rich.table import Table
 
-from config.settings import settings, EFFORT_PRESETS
+from config.settings import EFFORT_PRESETS, settings
 from core.providers.model_catalog import ModelCatalog
 from core.router.policies import ROUTING_TABLE
 
