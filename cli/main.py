@@ -72,10 +72,10 @@ def config():
 def web(host: str = "127.0.0.1", port: int = 8080):
     import uvicorn
 
-    from web.server import app as web_app
     from cli.display import console
+    from web.server import app as web_app
 
-    console.print(f"[bold green]Starting ParallelMind Web UI[/bold green]")
+    console.print("[bold green]Starting ParallelMind Web UI[/bold green]")
     console.print(f"[dim]Open http://{host}:{port} in your browser[/dim]\n")
     uvicorn.run(web_app, host=host, port=port, log_level="info")
 
