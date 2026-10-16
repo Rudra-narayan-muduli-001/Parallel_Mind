@@ -1,6 +1,6 @@
 from cli.display import console
 from cli.wizard import run_wizard
-from config.settings import settings, EFFORT_PRESETS
+from config.settings import EFFORT_PRESETS, settings
 from core.executor import AgentExecutor
 from core.providers.model_catalog import ModelCatalog
 from core.providers.registry import build_providers
