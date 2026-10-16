@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 
 from config.settings import settings
 
-
 DEFAULT_TIER = "mid"
 
 ROUTING_TABLE = {
