@@ -1,5 +1,6 @@
-from rich.console import Console
 from types import SimpleNamespace
+
+from rich.console import Console
 
 from core.providers.model_catalog import ModelCatalog
 
