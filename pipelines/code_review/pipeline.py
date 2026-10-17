@@ -1,6 +1,6 @@
+from core.aggregation.strategies import DedupeMergeAggregator
 from core.models import AgentResult, AgentTask
 from core.pipeline import build_orchestrator
-from core.aggregation.strategies import DedupeMergeAggregator
 from pipelines.code_review.reviewer_agent import CodeReviewerAgent
 from pipelines.code_review.splitter import CodeReviewSplitter
 
