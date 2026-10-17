@@ -1,7 +1,7 @@
 from config.settings import settings
+from core.aggregation.strategies import LLMSynthesisAggregator
 from core.models import AgentResult, AgentTask
 from core.pipeline import build_orchestrator
-from core.aggregation.strategies import LLMSynthesisAggregator
 from pipelines.research.planner import ResearchPlanner
 from pipelines.research.researcher_agent import ResearcherAgent
 
