@@ -1,13 +1,13 @@
 import asyncio
-import pytest
 
+import pytest
 from config.effort_presets import EFFORT_PRESETS
 from config.routing_table import DEFAULT_TIER, ROUTING_TABLE
+from utils.validation import validate_routing_table_against_catalog
+
 from config.settings import Settings
 from core.providers.model_catalog import ModelCatalog, ModelEntry, ProviderCatalogEntry
 from core.state.shared_context import SharedContext
-from utils.validation import validate_routing_table_against_catalog
-
 
 # ---- SharedContext ----
 

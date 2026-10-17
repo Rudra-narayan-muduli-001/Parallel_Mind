@@ -1,15 +1,12 @@
-import tempfile
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from core.orchestrator import Orchestrator
 
 from core.aggregation.strategies import DedupeMergeAggregator
 from core.models import AgentResult, AgentTask
-from core.orchestrator import Orchestrator
 from pipelines.code_review.pipeline import CodeReviewPipeline
 from pipelines.research.pipeline import ResearchPipeline
-
 
 # -- helpers --
 
@@ -187,8 +184,9 @@ async def test_code_review_aggregator_builder():
 
 @pytest.mark.asyncio
 async def test_research_aggregator_builder_prefers_default_provider():
-    from pipelines.research.aggregator import build_research_aggregator
     from unittest.mock import patch as mock_patch
+
+    from pipelines.research.aggregator import build_research_aggregator
 
     providers = {
         "groq": FakeProvider("groq"),

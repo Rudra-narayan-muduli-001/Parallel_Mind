@@ -1,7 +1,7 @@
 import logging
-import pytest
 
 from cli.run_config import RunConfig
+
 from utils.logger import setup_logging
 
 
