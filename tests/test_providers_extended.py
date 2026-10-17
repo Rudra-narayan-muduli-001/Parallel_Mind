@@ -4,13 +4,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from core.providers.base import BaseProvider, LLMResponse, ModelInfo
 from core.providers.anthropic_provider import AnthropicProvider
-from core.providers.circuit_breaker import CircuitBreaker
-from core.providers.key_pool import APIKeyPool
+from core.providers.base import BaseProvider, LLMResponse
 from core.providers.openai_compatible import OpenAICompatibleProvider
 from core.providers.registry import build_providers
-
 
 # ---- BaseProvider helpers ----
 
