@@ -1,9 +1,9 @@
 import pytest
 
 from core.models import AgentTask
+from core.providers.base import LLMResponse
 from pipelines.code_review.reviewer_agent import CodeReviewerAgent
 from pipelines.research.researcher_agent import ResearcherAgent
-from core.providers.base import LLMResponse
 
 
 class MockProvider:

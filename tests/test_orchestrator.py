@@ -1,10 +1,10 @@
 import asyncio
 
 import pytest
+from core.orchestrator import Orchestrator
 
 from core.executor import AgentExecutor
 from core.models import AgentResult, AgentTask
-from core.orchestrator import Orchestrator
 
 
 class DummyProvider:

@@ -1,11 +1,11 @@
 import json
+
 import pytest
+from core.router.router import Router
 
 from core.models import AgentTask
-from core.router.router import Router
-from core.router.policies import LLMRouterPolicy, ManualPolicy, RuleBasedPolicy, build_policy
 from core.providers.base import LLMResponse
-
+from core.router.policies import LLMRouterPolicy, ManualPolicy, RuleBasedPolicy, build_policy
 
 # -- Router wrapper --
 
