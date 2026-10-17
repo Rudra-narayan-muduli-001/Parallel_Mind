@@ -10,10 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader
 from starlette.requests import Request
 
-from config.settings import settings, EFFORT_PRESETS
+from config.settings import EFFORT_PRESETS, settings
 from core.executor import AgentExecutor
 from core.models import AgentResult, AgentTask
-from core.pipeline import build_orchestrator, run_agent_batch
 from core.providers.model_catalog import ModelCatalog
 from core.providers.registry import build_providers
 from core.router.policies import ManualPolicy, RuleBasedPolicy
